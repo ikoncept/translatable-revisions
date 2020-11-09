@@ -1,0 +1,10 @@
+.idea/*
+.idea/codeStyleSettings.xml
+.twgit_features_subject
+composer.lock
+/builds/
+/vendor/
+tests/_output
+coverage.xml
+.phpunit.result.cache
+.php_cs.cache

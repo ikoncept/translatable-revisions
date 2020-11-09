@@ -1,0 +1,42 @@
+{
+    "name": "infab/page-module",
+    "description": "Drop in page module for Laravel",
+    "type": "library",
+    "require": {
+        "php": "^7.3",
+        "spatie/laravel-sluggable": "^2.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.3.3",
+        "orchestra/testbench": "^6.4",
+        "nunomaduro/collision": "^5.1"
+    },
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Albin Nilsson",
+            "email": "albin@infab.io"
+        },
+        {
+            "name": "Daniel Källstrand Modig",
+            "email": "daniel@ikoncept.se"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Infab\\PageModule\\": "src/",
+            "Infab\\PageModule\\Database\\Factories\\": "database/factories"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {"Infab\\PageModule\\Tests\\": "tests"}
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Infab\\PageModule\\PageModuleServiceProvider"
+            ]
+        }
+    }
+}
