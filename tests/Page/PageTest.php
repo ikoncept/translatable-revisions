@@ -58,5 +58,6 @@ class PageTest extends TestCase
         // Assert
         $this->assertInstanceOf(PageMeta::class, $page->meta->first());
         $this->assertCount(2, $page->meta);
+        $this->assertArrayHasKey('meta_key', $meta_data->first()->toArray());
     }
 }

@@ -31,7 +31,5 @@ stages:
 # Test on PHP 7.4
 test74:
   image: php:7.4
-  services:
-    - mariadb
   script:
     - vendor/bin/phpunit --coverage-text --colors=never --testdox
