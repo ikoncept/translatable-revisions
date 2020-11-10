@@ -42,7 +42,7 @@ class CreateI18nTables extends Migration
             $table->boolean('approved')->default(0);
             $table->timestamps();
 
-            $table->index(['i18n_term_id','locale']);
+            $table->index(['term_id','locale']);
         });
     }
 
