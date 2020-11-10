@@ -3,6 +3,7 @@
 namespace Infab\PageModule\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Infab\PageModule\Models\I18nDefinition;
 
 class I18nTerm extends Model
 {
@@ -15,5 +16,10 @@ class I18nTerm extends Model
         }
 
         parent::__construct($attributes);
+    }
+
+    public function definitions()
+    {
+        return $this->hasMany(I18nDefinition::class, 'term_id');
     }
 }

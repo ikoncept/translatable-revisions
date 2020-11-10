@@ -16,12 +16,7 @@ class CreatePagesTable extends Migration
             $table->string('slug');
             $table->integer('published_version')->nullable();
             $table->integer('revision')->default(1);
-            $table->boolean('public')->default(0);
             $table->unsignedBigInteger('template_id');
-            $table->unsignedBigInteger('locked_by')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-            $table->unsignedBigInteger('published_by')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->nullableTimestamps();
         });

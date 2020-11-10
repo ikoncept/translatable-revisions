@@ -34,9 +34,10 @@ class CreateI18nTables extends Migration
             $table->index('key');
         });
 
-        Schema::create($prefix . 'i18n_definitions', function (Blueprint $table) {
+        Schema::create($prefix . 'i18n_definitions', function (Blueprint $table) use ($prefix) {
             $table->bigIncrements('id');
-            $table->integer('term_id');
+            $table->unsignedBigInteger('term_id');
+            $table->foreign('term_id')->references('id')->on($prefix . 'i18n_terms')->onDelete('cascade');
             $table->string('locale');
             $table->longText('content');
             $table->boolean('approved')->default(0);

@@ -63,7 +63,7 @@ class PageTest extends TestCase
     }
 
     /** @test **/
-    public function it_can_get_all_fields_associated_with_the_page()
+    public function it_can_update_fields_for_a_page()
     {
         // Arrange
         $template = PageTemplate::factory()->create();
@@ -87,6 +87,62 @@ class PageTest extends TestCase
             'content' => 'En hel del saker'
         ]);
         $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_' . $key,
+            'description' => $templateFields->first()->name
+        ]);
+    }
+
+    /** @test **/
+    public function it_can_publish_a_revision()
+    {
+        // Arrange
+        $template = PageTemplate::factory()->create();
+        $templateFields = PageTemplateField::factory()->count(5)->create([
+            'template_id' => $template->id,
+            'translated' => true
+        ]);
+        $orgPage = Page::factory()->create([
+            'id' => 1,
+            'title' => 'Original start page',
+            'template_id' => $template->id,
+            'revision' => 1,
+            'published_version' => null
+        ]);
+        $page = Page::factory()->create([
+            'id' => 2,
+            'title' => 'Startsidan - försök två',
+            'template_id' => $template->id,
+            'revision' => 2,
+            'published_version' => null
+        ]);
+        $key = $templateFields->first()->toArray()['key'];
+        $fields = $page->updateContent([
+            $key => 'En hel del saker'
+        ]);
+
+        // Act
+        $orgPage->publish($page->revision);
+
+        // Assert
+        $this->assertDatabaseMissing('pages', [
+            'id' => 2,
+            'title' => 'Startsidan - försök två',
+        ]);
+        $this->assertDatabaseHas('pages', [
+            'id' => 1,
+            'title' => 'Startsidan - försök två',
+            'published_version' => 2,
+            'revision' => 3
+        ]);
+
+        $this->assertDatabaseHas('i18n_definitions', [
+            'content' => 'En hel del saker'
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $orgPage->id .'_'. $orgPage->revision . '_' . $key,
+            'description' => $templateFields->first()->name
+        ]);
+        $this->assertDatabaseMissing('i18n_terms', [
             'key' => 'page_' . $page->id .'_'. $page->revision . '_' . $key,
             'description' => $templateFields->first()->name
         ]);

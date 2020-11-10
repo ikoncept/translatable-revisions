@@ -15,6 +15,9 @@ class Page extends Model
 {
     use HasFactory, HasSlug;
 
+
+    protected $dates = ['published_at'];
+
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {
@@ -49,15 +52,22 @@ class Page extends Model
         return $this->hasMany(PageMeta::class);
     }
 
+    public function deleteContent()
+    {
+        $identifier = 'page_' . $this->id .'_'. $this->revision . '_' ;
+
+        I18nTerm::where('key', 'LIKE', $identifier . '%')->delete();
+    }
+
     /**
-     * Update content for a field
+     * Update content for multiple fields
      *
      * @param array $fieldData
+     * @param string $locale
      * @return Collection
      */
-    public function updateContent(array $fieldData) : Collection
+    public function updateContent(array $fieldData, string $locale = 'sv') : Collection
     {
-        $locale = 'sv';
         $definitions = collect($fieldData)->map(function ($data, $field) use ($locale) {
             $templateField = PageTemplateField::where('key', $field)->first();
             $identifier = 'page_' . $this->id .'_'. $this->revision . '_' . $field;
@@ -81,5 +91,54 @@ class Page extends Model
         });
 
         return $definitions;
+    }
+
+    public function getFieldContent($locale)
+    {
+
+        $contentMap = $this->template->fields->mapWithKeys(function($field) use ($locale) {
+            $term = 'page_' . $this->id .'_'. $this->revision . '_' . $field->key;
+
+            $content = I18nTerm::where('key', $term)
+                ->whereHas('definitions', $definitions = function($query) use ($locale) {
+                    $query->where('locale', $locale);
+                })
+                ->with('definitions', $definitions)
+                ->first();
+
+            if(! $content) {
+                return [$field['key'] => ''];
+            }
+            return [
+                $field['key'] => $content->definitions->first()->content
+            ];
+        });
+
+        return $contentMap;
+    }
+
+    /**
+     * Publish a specified revision
+     *
+     * @param int $revision
+     * @param string $locale
+     * @return void
+     */
+    public function publish(int $revision, string $locale = 'sv')
+    {
+        $versionToPublish = Page::where('revision', $revision)->firstOrFail();
+        $content = $versionToPublish->getFieldContent($locale);
+
+        $this->published_version = $versionToPublish->revision;
+        $this->revision = $versionToPublish->revision + 1;
+        $this->published_at = now();
+        $this->title = $versionToPublish->title;
+        $this->updateContent($content->toArray());
+        $this->save();
+
+        $versionToPublish->deleteContent();
+        $versionToPublish->delete();
+
+        return $this;
     }
 }
