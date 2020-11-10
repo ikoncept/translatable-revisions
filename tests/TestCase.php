@@ -20,6 +20,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('page-module.pages_table_name', 'pages');
         $app['config']->set('page-module.page_templates_table_name', 'page_templates');
         $app['config']->set('page-module.page_meta_table_name', 'page_meta');
+        $app['config']->set('page-module.page_template_fields_table_name', 'page_template_fields');
 
 
         include_once(__DIR__  . '/../database/migrations/create_pages_table.php.stub');
@@ -30,6 +31,12 @@ abstract class TestCase extends Orchestra
 
         include_once(__DIR__  . '/../database/migrations/create_page_meta_table.php.stub');
         (new \CreatePageMetaTable())->up();
+
+        include_once(__DIR__  . '/../database/migrations/create_page_template_fields_table.php.stub');
+        (new \CreatePageTemplateFieldsTable())->up();
+
+        include_once(__DIR__  . '/../database/migrations/create_i18n_tables.php.stub');
+        (new \CreateI18nTables())->up();
     }
 
     protected function getEnvironmentSetUp($app)

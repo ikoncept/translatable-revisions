@@ -15,7 +15,7 @@ class CreatePagesTable extends Migration
             $table->string('title');
             $table->string('slug');
             $table->integer('published_version')->nullable();
-            $table->integer('revision_version')->default(1);
+            $table->integer('revision')->default(1);
             $table->boolean('public')->default(0);
             $table->unsignedBigInteger('template_id');
             $table->unsignedBigInteger('locked_by')->nullable();

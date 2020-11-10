@@ -28,6 +28,10 @@ class PageModuleServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../database/migrations/create_page_meta_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_create_page_meta_table.php'),
         ], 'migrations');
+
+        $this->publishes([
+            __DIR__.'/../database/migrations/create_page_template_fields_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()).'_create_page_template_fields_table.php'),
+        ], 'migrations');
     }
 
     /**

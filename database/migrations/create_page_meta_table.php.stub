@@ -13,6 +13,7 @@ class CreatePageMetaTable extends Migration
         Schema::create($tableName, function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('page_id');
+            $table->foreign('page_id')->references('id')->on(config('page-module.pages_table_name'))->onDelete('cascade');
             $table->integer('page_version');
             $table->string('meta_key');
             $table->binary('meta_value');

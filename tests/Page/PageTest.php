@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Infab\PageModule\Models\Page;
 use Infab\PageModule\Models\PageMeta;
 use Infab\PageModule\Models\PageTemplate;
+use Infab\PageModule\Models\PageTemplateField;
 use Infab\PageModule\Tests\TestCase;
 
 class PageTest extends TestCase
@@ -59,5 +60,35 @@ class PageTest extends TestCase
         $this->assertInstanceOf(PageMeta::class, $page->meta->first());
         $this->assertCount(2, $page->meta);
         $this->assertArrayHasKey('meta_key', $meta_data->first()->toArray());
+    }
+
+    /** @test **/
+    public function it_can_get_all_fields_associated_with_the_page()
+    {
+        // Arrange
+        $template = PageTemplate::factory()->create();
+        $templateFields = PageTemplateField::factory()->count(5)->create([
+            'template_id' => $template->id,
+            'translated' => true
+        ]);
+        $page = Page::factory()->create([
+            'template_id' => $template->id,
+            'revision' => 10
+        ]);
+
+        // Act
+        $key = $templateFields->first()->toArray()['key'];
+        $fields = $page->updateContent([
+            $key => 'En hel del saker'
+        ]);
+
+        // Assert
+        $this->assertDatabaseHas('i18n_definitions', [
+            'content' => 'En hel del saker'
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_' . $key,
+            'description' => $templateFields->first()->name
+        ]);
     }
 }
