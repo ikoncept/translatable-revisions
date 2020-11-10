@@ -80,7 +80,7 @@ class PageTest extends TestCase
         $key = $templateFields->first()->toArray()['key'];
         $fields = $page->updateContent([
             $key => 'En hel del saker'
-        ]);
+        ], 'sv', 10);
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
@@ -88,7 +88,7 @@ class PageTest extends TestCase
         ]);
         $this->assertDatabaseHas('i18n_terms', [
             'key' => 'page_' . $page->id .'_'. $page->revision . '_' . $key,
-            'description' => $templateFields->first()->name
+            'description' => $templateFields->first()->name . ' for ' . $page->title
         ]);
     }
 
@@ -135,6 +135,5 @@ class PageTest extends TestCase
         $this->assertDatabaseHas('i18n_definitions', [
             'content' => 'What, helt annat'
         ]);
-
     }
 }
