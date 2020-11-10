@@ -52,13 +52,6 @@ class Page extends Model
         return $this->hasMany(PageMeta::class);
     }
 
-    public function deleteContent()
-    {
-        $identifier = 'page_' . $this->id .'_'. $this->revision . '_' ;
-
-        I18nTerm::where('key', 'LIKE', $identifier . '%')->delete();
-    }
-
     /**
      * Update content for multiple fields
      *
@@ -66,16 +59,16 @@ class Page extends Model
      * @param string $locale
      * @return Collection
      */
-    public function updateContent(array $fieldData, string $locale = 'sv') : Collection
+    public function updateContent(array $fieldData, string $locale = 'sv', $revision = 1) : Collection
     {
-        $definitions = collect($fieldData)->map(function ($data, $field) use ($locale) {
+        $definitions = collect($fieldData)->map(function ($data, $field) use ($locale, $revision) {
             $templateField = PageTemplateField::where('key', $field)->first();
-            $identifier = 'page_' . $this->id .'_'. $this->revision . '_' . $field;
+            $identifier = 'page_' . $this->id .'_'. $revision . '_' . $field;
 
             // Find term
             $term = I18nTerm::updateOrCreate(
                 ['key' => $identifier],
-                ['description' => $templateField->name]
+                ['description' => $templateField->name . ' for ' . $this->title]
             );
 
             // Create or update definition
@@ -93,11 +86,11 @@ class Page extends Model
         return $definitions;
     }
 
-    public function getFieldContent($locale)
+    public function getFieldContent($locale, $revision = 1)
     {
 
-        $contentMap = $this->template->fields->mapWithKeys(function($field) use ($locale) {
-            $term = 'page_' . $this->id .'_'. $this->revision . '_' . $field->key;
+        $contentMap = $this->template->fields->mapWithKeys(function($field) use ($locale, $revision) {
+            $term = 'page_' . $this->id .'_'. $revision . '_' . $field->key;
 
             $content = I18nTerm::where('key', $term)
                 ->whereHas('definitions', $definitions = function($query) use ($locale) {
@@ -117,6 +110,17 @@ class Page extends Model
         return $contentMap;
     }
 
+    public function purgeOldRevisions($revision)
+    {
+        $identifier = 'page_' . $this->id .'_'. $revision . '_' ;
+
+        I18nTerm::where('key', 'LIKE', $identifier . '%')
+            ->get()->each(function($item) {
+                $item->definitions()->delete();
+                $item->delete();
+            });
+    }
+
     /**
      * Publish a specified revision
      *
@@ -126,18 +130,16 @@ class Page extends Model
      */
     public function publish(int $revision, string $locale = 'sv')
     {
-        $versionToPublish = Page::where('revision', $revision)->firstOrFail();
-        $content = $versionToPublish->getFieldContent($locale);
+        $content = $this->getFieldContent($locale, $revision);
 
-        $this->published_version = $versionToPublish->revision;
-        $this->revision = $versionToPublish->revision + 1;
+        $oldRevision = $revision - 1;
+        $this->published_version = $revision;
+        $this->revision = $revision + 1;
         $this->published_at = now();
-        $this->title = $versionToPublish->title;
-        $this->updateContent($content->toArray());
+        $this->updateContent($content->toArray(), $locale, $this->revision);
         $this->save();
 
-        $versionToPublish->deleteContent();
-        $versionToPublish->delete();
+        $this->purgeOldRevisions($oldRevision);
 
         return $this;
     }
