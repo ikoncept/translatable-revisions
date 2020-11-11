@@ -93,6 +93,89 @@ class PageTest extends TestCase
     }
 
     /** @test **/
+    public function it_can_update_grouped_fields_for_a_page()
+    {
+        // Arrange
+        $template = PageTemplate::factory()->create();
+        $titleField = PageTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'name' => 'Page title',
+            'translated' => true,
+            'key' => 'page_title'
+        ]);
+        $boxField = PageTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'translated' => true,
+            'key' => 'boxes',
+            'name' => 'Boxes',
+            'group' => 'boxes'
+        ]);
+        $page = Page::factory()->create([
+            'template_id' => $template->id,
+            'revision' => 10
+        ]);
+
+        // Act
+        $fields = $page->updateContent([
+            'page_title' => 'The page title for the page',
+            'boxes' => [
+                ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
+                ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
+                ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
+            ]
+        ], 'sv', 10);
+
+        // Assert
+        $this->assertDatabaseHas('i18n_definitions', [
+            'content' => 'The page title for the page'
+        ]);
+        $this->assertDatabaseHas('i18n_definitions', [
+            'content' => 'The page title for the page'
+        ]);
+
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_page_title',
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__0_url',
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__1_url',
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__2_url',
+        ]);
+
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_page_title',
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__0_title',
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__1_title',
+        ]);
+        $this->assertDatabaseHas('i18n_terms', [
+            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__2_title',
+        ]);
+
+
+
+        $this->assertDatabaseHas('i18n_definitions', [
+            'locale' => 'sv',
+            'content' => 'https://google.com',
+        ]);
+        $this->assertDatabaseHas('i18n_definitions', [
+            'locale' => 'sv',
+            'content' => 'https://bog.com',
+        ]);
+        $this->assertDatabaseHas('i18n_definitions', [
+            'locale' => 'sv',
+            'content' => 'http://flank.se',
+        ]);
+    }
+
+    /** @test **/
     public function it_can_publish_a_revision()
     {
         // Arrange

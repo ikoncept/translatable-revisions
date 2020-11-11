@@ -9,6 +9,8 @@ class PageMeta extends Model {
 
     use HasFactory;
 
+    protected $fillable = ['meta_key', 'meta_value', 'page_id', 'page_version'];
+
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {
