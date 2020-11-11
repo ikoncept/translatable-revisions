@@ -93,7 +93,7 @@ trait HasRevisions
         return $definitions;
     }
 
-    public function getFieldContent($locale, $revision = 1)
+    public function getFieldContent($locale, $revision = 1) : Collection
     {
         $contentMap = $this->template->fields->mapWithKeys(function ($field) use ($locale, $revision) {
             $term = 'page_' . $this->id .'_'. $revision . '_' . $field->key;
@@ -106,7 +106,25 @@ trait HasRevisions
                 ->first();
 
             if (! $content) {
-                return [$field['key'] => ''];
+                // Check pagemeta
+                $fop = $this->meta()->where('page_version', $revision)->first();
+                if(! $fop) {
+                    return collect([]);
+                }
+                $metaValue = $fop->meta_value;
+                $multiContent = collect(json_decode($metaValue, true))->map(function($item) {
+                    $value = collect($item)->map(function($value, $key) {
+                        $term = I18nTerm::where('key', $value)
+                            ->first();
+                        $definition = I18nDefinition::where('term_id', $term->id)
+                            ->where('locale', 'sv')
+                            ->first();
+                        return $definition->content;
+                    });
+                    return $value;
+                });
+
+                return [$field['key'] => $multiContent->toArray()];
             }
             return [
                 $field['key'] => $content->definitions->first()->content

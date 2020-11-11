@@ -219,4 +219,44 @@ class PageTest extends TestCase
             'content' => 'What, helt annat'
         ]);
     }
+
+    /** @test **/
+    public function it_can_get_field_content()
+    {
+        // Arrange
+        $template = PageTemplate::factory()->create();
+        $titleField = PageTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'name' => 'Page title',
+            'translated' => true,
+            'key' => 'page_title'
+        ]);
+        $boxField = PageTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'translated' => true,
+            'key' => 'boxes',
+            'name' => 'Boxes',
+            'group' => 'boxes'
+        ]);
+        $page = Page::factory()->create([
+            'template_id' => $template->id,
+            'revision' => 10
+        ]);
+
+        // Act
+        $fields = $page->updateContent([
+            'page_title' => 'The page title for the page',
+            'boxes' => [
+                ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
+                ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
+                ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
+            ]
+        ], 'sv', 10);
+
+        // Act
+        $content = $page->getFieldContent('sv', 10);
+
+        // Assert
+        $this->assertEquals(3, count($content['boxes']));
+    }
 }
