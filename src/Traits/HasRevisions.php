@@ -123,23 +123,29 @@ trait HasRevisions
                 ->with('definitions', $definitions)
                 ->first();
 
+
             if (! $content) {
+                if($field->type != 'grid') {
+                    return collect([$field->key => '']);
+                }
                 // Check pagemeta
-                $fop = $this->meta()->where('page_version', $revision)->first();
-                if (! $fop) {
+                $meta = $this->meta()->where('page_version', $revision)->first();
+                if (! $meta) {
                     return collect([]);
                 }
-                $metaValue = $fop->meta_value;
-                $multiContent = collect(json_decode($metaValue, true))->map(function ($item) {
-                    $value = collect($item)->map(function ($value, $key) {
-                        $term = I18nTerm::where('key', $value)
+                $multiContent = collect(json_decode($meta->meta_value, true))->map(function ($item) {
+                    $content = collect($item)->map(function ($metaKey) {
+                        $term = I18nTerm::where('key', $metaKey)
                             ->first();
                         $definition = I18nDefinition::where('term_id', $term->id)
                             ->where('locale', $this->locale)
                             ->first();
+                        if(! $definition) {
+                            return null;
+                        }
                         return $definition->content;
                     });
-                    return $value;
+                    return $content;
                 });
 
                 return [$field['key'] => $multiContent->toArray()];
