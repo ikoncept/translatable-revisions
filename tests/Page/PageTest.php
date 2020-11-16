@@ -3,6 +3,7 @@
 namespace Infab\PageModule\Tests\Page;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Infab\PageModule\Models\Page;
 use Infab\PageModule\Models\PageMeta;
@@ -244,6 +245,7 @@ class PageTest extends TestCase
         ]);
 
         // Act
+        App::setLocale('sv');
         $fields = $page->updateContent([
             'page_title' => 'The page title for the page',
             'boxes' => [
@@ -254,7 +256,7 @@ class PageTest extends TestCase
         ], 'sv', 10);
 
         // Act
-        $content = $page->getFieldContent('sv', 10);
+        $content = $page->getFieldContent(10);
 
         // Assert
         $this->assertEquals(3, count($content['boxes']));

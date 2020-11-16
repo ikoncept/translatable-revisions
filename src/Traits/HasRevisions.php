@@ -5,6 +5,7 @@ namespace Infab\PageModule\Traits;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Infab\PageModule\Models\I18nDefinition;
 use Infab\PageModule\Models\I18nTerm;
 use Infab\PageModule\Models\PageMeta;
@@ -93,8 +94,11 @@ trait HasRevisions
         return $definitions;
     }
 
-    public function getFieldContent($locale, $revision = 1) : Collection
+    public function getFieldContent($revision = 1, $locale = null) : Collection
     {
+        if(! $locale) {
+            $locale = App::getLocale();
+        }
         $contentMap = $this->template->fields->mapWithKeys(function ($field) use ($locale, $revision) {
             $term = 'page_' . $this->id .'_'. $revision . '_' . $field->key;
 
