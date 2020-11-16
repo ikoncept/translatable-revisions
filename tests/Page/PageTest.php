@@ -10,6 +10,9 @@ use Infab\PageModule\Models\PageMeta;
 use Infab\PageModule\Models\PageTemplate;
 use Infab\PageModule\Models\PageTemplateField;
 use Infab\PageModule\Tests\TestCase;
+use Illuminate\Support\Facades\DB;
+use Infab\PageModule\Models\I18nDefinition;
+use Infab\PageModule\Models\I18nLocale;
 
 class PageTest extends TestCase
 {
@@ -81,11 +84,12 @@ class PageTest extends TestCase
         $key = $templateFields->first()->toArray()['key'];
         $fields = $page->updateContent([
             $key => 'En hel del saker'
-        ], 'sv', 10);
+        ], 10, 'sv');
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'En hel del saker'
+            'content' => 'En hel del saker',
+            'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_terms', [
             'key' => 'page_' . $page->id .'_'. $page->revision . '_' . $key,
@@ -124,7 +128,7 @@ class PageTest extends TestCase
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
             ]
-        ], 'sv', 10);
+        ], 10);
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
@@ -163,15 +167,15 @@ class PageTest extends TestCase
 
 
         $this->assertDatabaseHas('i18n_definitions', [
-            'locale' => 'sv',
+            'locale' => 'en',
             'content' => 'https://google.com',
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'locale' => 'sv',
+            'locale' => 'en',
             'content' => 'https://bog.com',
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'locale' => 'sv',
+            'locale' => 'en',
             'content' => 'http://flank.se',
         ]);
     }
@@ -180,6 +184,14 @@ class PageTest extends TestCase
     public function it_can_publish_a_revision()
     {
         // Arrange
+        $prefix = config('page-module.i18n_table_prefix_name');
+        DB::table($prefix . 'i18n_locales')->insert([
+            'name' => 'Swedish',
+            'native' => 'Svenska',
+            'iana_code' => 'se',
+            'regional' => 'se_SV',
+            'enabled' => true
+        ]);
         $template = PageTemplate::factory()->create();
         $templateFields = PageTemplateField::factory()->count(5)->create([
             'template_id' => $template->id,
@@ -196,11 +208,20 @@ class PageTest extends TestCase
 
         $fields = $page->updateContent([
             $key => 'En hel del saker'
-        ], 'sv', 1);
+        ], 1, 'sv');
 
         $revisionFields = $page->updateContent([
             $key => 'What, helt annat'
-        ], 'sv', 2);
+        ], 2, 'sv');
+
+        $enFields = $page->updateContent([
+            $key => 'A bunch of things'
+        ], 1, 'en');
+
+        $enRevisionFields = $page->updateContent([
+            $key => 'What, something completeley different!'
+        ], 2, 'en');
+
 
         // Act
         $page->publish(2);
@@ -208,16 +229,26 @@ class PageTest extends TestCase
         // Assert
         $this->assertDatabaseHas('pages', [
             'id' => 1,
-            // 'title' => 'Startsidan - försök två',
             'published_version' => 2,
             'revision' => 3
         ]);
 
         $this->assertDatabaseMissing('i18n_definitions', [
-            'content' => 'En hel del saker'
+            'content' => 'En hel del saker',
+            'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'What, helt annat'
+            'content' => 'What, helt annat',
+            'locale' => 'sv'
+        ]);
+
+        $this->assertDatabaseMissing('i18n_definitions', [
+            'content' => 'A bunch of things',
+            'locale' => 'en'
+        ]);
+        $this->assertDatabaseHas('i18n_definitions', [
+            'content' => 'What, something completeley different!',
+            'locale' => 'en'
         ]);
     }
 
@@ -253,7 +284,7 @@ class PageTest extends TestCase
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
             ]
-        ], 'sv', 10);
+        ], 10);
 
         // Act
         $content = $page->getFieldContent(10);

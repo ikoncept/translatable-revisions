@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Infab\PageModule\Models\I18nDefinition;
+use Infab\PageModule\Models\I18nLocale;
 use Infab\PageModule\Models\I18nTerm;
 use Infab\PageModule\Models\PageMeta;
 use Infab\PageModule\Models\PageTemplate;
@@ -14,6 +15,19 @@ use Infab\PageModule\Models\PageTemplateField;
 
 trait HasRevisions
 {
+    public $locale;
+
+    public function setLocale($locale)
+    {
+        if ($locale) {
+            $this->locale = $locale;
+        } else {
+            $this->locale = App::getLocale();
+        }
+
+        return $this->locale;
+    }
+
     public function template() : BelongsTo
     {
         return $this->belongsTo(PageTemplate::class, 'template_id', 'id');
@@ -31,9 +45,11 @@ trait HasRevisions
      * @param string $locale
      * @return Collection
      */
-    public function updateContent(array $fieldData, string $locale = 'sv', $revision = 1) : Collection
+    public function updateContent(array $fieldData, $revision = 1, $locale = null) : Collection
     {
-        $definitions = collect($fieldData)->map(function ($data, $field) use ($locale, $revision) {
+        $this->setLocale($locale);
+
+        $definitions = collect($fieldData)->map(function ($data, $field) use ($revision) {
             $templateField = PageTemplateField::where('key', $field)->first();
             $identifier = 'page_' . $this->id .'_'. $revision . '_' . $field;
 
@@ -53,11 +69,11 @@ trait HasRevisions
                         );
 
                         $definition = I18nDefinition::updateOrCreate(
-                            ['term_id' => $term->id],
                             [
-                                'content' => $subfield,
-                                'locale' => 'sv'
-                            ]
+                                'term_id' => $term->id,
+                                'locale' => $this->locale
+                            ],
+                            ['content' => $subfield]
                         );
 
                         return $identifier;
@@ -80,15 +96,15 @@ trait HasRevisions
                     ['description' => $templateField->name . ' for ' . $this->title]
                 );
                 $definition = I18nDefinition::updateOrCreate(
-                    ['term_id' => $term->id],
                     [
-                        'content' => $data,
-                        'locale' => $locale
-                    ]
+                        'term_id' => $term->id,
+                        'locale' => $this->locale
+                    ],
+                    ['content' => $data]
                 );
+
                 return $definition;
             }
-
         });
 
         return $definitions;
@@ -96,15 +112,13 @@ trait HasRevisions
 
     public function getFieldContent($revision = 1, $locale = null) : Collection
     {
-        if(! $locale) {
-            $locale = App::getLocale();
-        }
-        $contentMap = $this->template->fields->mapWithKeys(function ($field) use ($locale, $revision) {
+        $this->setLocale($locale);
+        $contentMap = $this->template->fields->mapWithKeys(function ($field) use ($revision) {
             $term = 'page_' . $this->id .'_'. $revision . '_' . $field->key;
 
             $content = I18nTerm::where('key', $term)
-                ->whereHas('definitions', $definitions = function ($query) use ($locale) {
-                    $query->where('locale', $locale);
+                ->whereHas('definitions', $definitions = function ($query) {
+                    $query->where('locale', $this->locale);
                 })
                 ->with('definitions', $definitions)
                 ->first();
@@ -112,16 +126,16 @@ trait HasRevisions
             if (! $content) {
                 // Check pagemeta
                 $fop = $this->meta()->where('page_version', $revision)->first();
-                if(! $fop) {
+                if (! $fop) {
                     return collect([]);
                 }
                 $metaValue = $fop->meta_value;
-                $multiContent = collect(json_decode($metaValue, true))->map(function($item) {
-                    $value = collect($item)->map(function($value, $key) {
+                $multiContent = collect(json_decode($metaValue, true))->map(function ($item) {
+                    $value = collect($item)->map(function ($value, $key) {
                         $term = I18nTerm::where('key', $value)
                             ->first();
                         $definition = I18nDefinition::where('term_id', $term->id)
-                            ->where('locale', 'sv')
+                            ->where('locale', $this->locale)
                             ->first();
                         return $definition->content;
                     });
@@ -153,21 +167,24 @@ trait HasRevisions
      * Publish a specified revision
      *
      * @param int $revision
-     * @param string $locale
      * @return void
      */
-    public function publish(int $revision, string $locale = 'sv')
+    public function publish(int $revision)
     {
-        $content = $this->getFieldContent($locale, $revision);
+        // Should publish all languages?
+        $locales = I18nLocale::where('enabled', 1)
+            ->get()->each(function ($locale) use ($revision) {
+                $content = $this->getFieldContent($locale, $revision);
 
-        $oldRevision = $revision - 1;
-        $this->published_version = $revision;
-        $this->revision = $revision + 1;
-        $this->published_at = now();
-        $this->updateContent($content->toArray(), $locale, $this->revision);
-        $this->save();
+                $oldRevision = $revision - 1;
+                $this->published_version = $revision;
+                $this->revision = $revision + 1;
+                $this->published_at = now();
+                $this->updateContent($content->toArray(), $this->revision, $locale->iana_code);
+                $this->save();
 
-        $this->purgeOldRevisions($oldRevision);
+                $this->purgeOldRevisions($oldRevision);
+            });
 
         return $this;
     }
