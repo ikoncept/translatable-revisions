@@ -21,7 +21,7 @@ class CreateI18nTables extends Migration
             $table->string('name');
             $table->string('native');
             $table->string('regional');
-            $table->string('iana_code');
+            $table->string('iso_code');
             $table->boolean('enabled')->default(0);
             $table->integer('sort_index')->default(0);
             $table->timestamps();
@@ -51,7 +51,7 @@ class CreateI18nTables extends Migration
         DB::table($prefix . 'i18n_locales')->insert([
             'name' => 'English',
             'native' => 'English',
-            'iana_code' => 'en',
+            'iso_code' => 'en',
             'regional' => 'en_GB',
             'enabled' => true
         ]);
