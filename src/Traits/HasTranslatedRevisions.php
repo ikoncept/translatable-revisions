@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Infab\PageModule\Events\DefinitionsPublished;
+use Infab\PageModule\Events\DefinitionsUpdated;
 use Infab\PageModule\Models\I18nDefinition;
 use Infab\PageModule\Models\I18nLocale;
 use Infab\PageModule\Models\I18nTerm;
@@ -13,7 +15,7 @@ use Infab\PageModule\Models\PageMeta;
 use Infab\PageModule\Models\PageTemplate;
 use Infab\PageModule\Models\PageTemplateField;
 
-trait HasRevisions
+trait HasTranslatedRevisions
 {
     public $locale;
 
@@ -89,6 +91,8 @@ trait HasRevisions
                         'meta_value' => $multiData->toJson()
                     ]
                 );
+
+                return ['definition' => $multiData, 'term' => $identifier, 'meta' => $updated];
             } else {
                 // Find term
                 $term = I18nTerm::updateOrCreate(
@@ -103,9 +107,11 @@ trait HasRevisions
                     ['content' => $data]
                 );
 
-                return $definition;
+                return ['definition' => $definition, 'term' => $term];
             }
         });
+
+        app()->events->dispatch(new DefinitionsUpdated($definitions, $this));
 
         return $definitions;
     }
@@ -125,9 +131,9 @@ trait HasRevisions
 
 
             if (! $content) {
-                if($field->type != 'grid') {
-                    return collect([$field->key => '']);
-                }
+                // if($field->type != 'grid') {
+                //     return collect([$field->key => '']);
+                // }
                 // Check pagemeta
                 $meta = $this->meta()->where('page_version', $revision)->first();
                 if (! $meta) {
@@ -178,19 +184,22 @@ trait HasRevisions
     public function publish(int $revision)
     {
         // Should publish all languages?
-        $locales = I18nLocale::where('enabled', 1)
-            ->get()->each(function ($locale) use ($revision) {
-                $content = $this->getFieldContent($locale, $revision);
+        $updatedContent = I18nLocale::where('enabled', 1)
+            ->get()->mapWithKeys(function ($locale) use ($revision) {
+                $content = $this->getFieldContent($revision, $locale->iso_code);
 
                 $oldRevision = $revision - 1;
                 $this->published_version = $revision;
                 $this->revision = $revision + 1;
                 $this->published_at = now();
-                $this->updateContent($content->toArray(), $this->revision, $locale->iana_code);
+                $this->updateContent($content->toArray(), $this->revision, $locale->iso_code);
                 $this->save();
 
                 $this->purgeOldRevisions($oldRevision);
+                return [$locale->iso_code => $this->getFieldContent($revision, $locale->iso_code)];
             });
+
+        app()->events->dispatch(new DefinitionsPublished($updatedContent, $this));
 
         return $this;
     }

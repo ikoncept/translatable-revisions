@@ -4,18 +4,18 @@ namespace Infab\PageModule\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Infab\PageModule\Database\Factories\PageFactory;
-use Spatie\Sluggable\HasSlug;
-use Spatie\Sluggable\SlugOptions;
-use Infab\PageModule\Traits\HasRevisions;
+use Infab\PageModule\Traits\HasTranslatedRevisions;
+use Illuminate\Support\Str;
 
 class Page extends Model
 {
-    use HasFactory, HasSlug, HasRevisions;
+    use HasFactory, HasTranslatedRevisions;
 
     protected static function newFactory()
     {
         return PageFactory::new();
     }
+
 
     protected $dates = ['published_at'];
 
@@ -28,15 +28,9 @@ class Page extends Model
         parent::__construct($attributes);
     }
 
-
-    /**
-     * Get the options for generating the slug.
-     */
-    public function getSlugOptions() : SlugOptions
+    public function setTitleAttribute($value)
     {
-        return SlugOptions::create()
-            ->generateSlugsFrom('title')
-            ->saveSlugsTo('slug');
+        $this->attributes['title'] = $value;
+        $this->attributes['slug'] = Str::slug($value);
     }
-
 }

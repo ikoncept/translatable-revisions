@@ -3,7 +3,6 @@
 namespace Infab\PageModule\Tests\Page;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Infab\PageModule\Models\Page;
 use Infab\PageModule\Models\PageMeta;
@@ -11,8 +10,9 @@ use Infab\PageModule\Models\PageTemplate;
 use Infab\PageModule\Models\PageTemplateField;
 use Infab\PageModule\Tests\TestCase;
 use Illuminate\Support\Facades\DB;
-use Infab\PageModule\Models\I18nDefinition;
-use Infab\PageModule\Models\I18nLocale;
+use Illuminate\Support\Facades\Event;
+use Infab\PageModule\Events\DefinitionsPublished;
+use Infab\PageModule\Events\DefinitionsUpdated;
 
 class PageTest extends TestCase
 {
@@ -184,11 +184,12 @@ class PageTest extends TestCase
     public function it_can_publish_a_revision()
     {
         // Arrange
+        Event::fake(DefinitionsPublished::class);
         $prefix = config('page-module.i18n_table_prefix_name');
         DB::table($prefix . 'i18n_locales')->insert([
             'name' => 'Swedish',
             'native' => 'Svenska',
-            'iana_code' => 'se',
+            'iso_code' => 'sv',
             'regional' => 'se_SV',
             'enabled' => true
         ]);
@@ -250,12 +251,15 @@ class PageTest extends TestCase
             'content' => 'What, something completeley different!',
             'locale' => 'en'
         ]);
+
+        Event::assertDispatched(DefinitionsPublished::class);
     }
 
     /** @test **/
     public function it_can_get_field_content()
     {
         // Arrange
+        Event::fake(DefinitionsUpdated::class);
         $template = PageTemplate::factory()->create();
         $titleField = PageTemplateField::factory()->create([
             'template_id' => $template->id,
@@ -277,7 +281,7 @@ class PageTest extends TestCase
         ]);
 
         // Act
-        App::setLocale('sv');
+        app()->setLocale('sv');
         $fields = $page->updateContent([
             'page_title' => 'The page title for the page',
             'boxes' => [
@@ -292,5 +296,6 @@ class PageTest extends TestCase
 
         // Assert
         $this->assertEquals(3, count($content['boxes']));
+        Event::assertDispatched(DefinitionsUpdated::class);
     }
 }
