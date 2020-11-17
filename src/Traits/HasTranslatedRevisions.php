@@ -131,9 +131,9 @@ trait HasTranslatedRevisions
 
 
             if (! $content) {
-                // if($field->type != 'grid') {
-                //     return collect([$field->key => '']);
-                // }
+                if($field->type != 'grid') {
+                    return collect([$field->key => '']);
+                }
                 // Check pagemeta
                 $meta = $this->meta()->where('page_version', $revision)->first();
                 if (! $meta) {
