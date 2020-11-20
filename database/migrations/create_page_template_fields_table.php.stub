@@ -22,8 +22,8 @@ class CreatePageTemplateFieldsTable extends Migration
             $table->string('name');
             $table->string('key');
             $table->string('type');
+            $table->string('group')->nullable();
             $table->boolean('repeater')->default(0);
-            $table->string('block')->nullable();
             $table->boolean('translated')->default(0);
             $table->integer('sort_index')->default(0);
         });
