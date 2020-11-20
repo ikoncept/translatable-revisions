@@ -131,7 +131,7 @@ trait HasTranslatedRevisions
 
 
             if (! $content) {
-                if($field->type != 'grid') {
+                if(! $field->repeater) {
                     return collect([$field->key => '']);
                 }
                 // Check pagemeta

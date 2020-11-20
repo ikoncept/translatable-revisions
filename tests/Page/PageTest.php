@@ -113,7 +113,7 @@ class PageTest extends TestCase
             'translated' => true,
             'key' => 'boxes',
             'name' => 'Boxes',
-            'group' => 'boxes'
+            'repeater' => true
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
@@ -272,7 +272,7 @@ class PageTest extends TestCase
             'translated' => true,
             'key' => 'boxes',
             'name' => 'Boxes',
-            'group' => 'grid',
+            'repeater' => true,
             'type' => 'grid'
         ]);
         $page = Page::factory()->create([
