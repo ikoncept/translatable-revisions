@@ -14,7 +14,7 @@ class CreateI18nTables extends Migration
      */
     public function up()
     {
-        $prefix = config('page-module.i18n_table_prefix_name');
+        $prefix = config('translatable-revisions.i18n_table_prefix_name');
 
         Schema::create($prefix . 'i18n_locales', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -24,7 +24,6 @@ class CreateI18nTables extends Migration
             $table->string('iso_code');
             $table->boolean('enabled')->default(0);
             $table->integer('sort_index')->default(0);
-            $table->timestamps();
         });
 
         Schema::create($prefix . 'i18n_terms', function (Blueprint $table) {
@@ -41,7 +40,7 @@ class CreateI18nTables extends Migration
             $table->unsignedBigInteger('term_id');
             $table->foreign('term_id')->references('id')->on($prefix . 'i18n_terms')->onDelete('cascade');
             $table->string('locale');
-            $table->longText('content');
+            $table->longText('content')->nullable();
             $table->boolean('approved')->default(0);
             $table->timestamps();
 
@@ -53,6 +52,14 @@ class CreateI18nTables extends Migration
             'native' => 'English',
             'iso_code' => 'en',
             'regional' => 'en_GB',
+            'enabled' => true
+        ]);
+
+        DB::table($prefix . 'i18n_locales')->insert([
+            'name' => 'Swedish',
+            'native' => 'Svensk',
+            'iso_code' => 'sv',
+            'regional' => 'sv_SE',
             'enabled' => true
         ]);
     }

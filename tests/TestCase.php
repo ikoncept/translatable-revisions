@@ -1,6 +1,6 @@
 <?php
 
-namespace Infab\PageModule\Tests;
+namespace Infab\TranslatableRevisions\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -17,23 +17,23 @@ abstract class TestCase extends Orchestra
 
     public function setUpDatabase($app)
     {
-        $app['config']->set('page-module.pages_table_name', 'pages');
-        $app['config']->set('page-module.page_templates_table_name', 'page_templates');
-        $app['config']->set('page-module.page_meta_table_name', 'page_meta');
-        $app['config']->set('page-module.page_template_fields_table_name', 'page_template_fields');
+        $app['config']->set('translatable-revisions.revisions_table_name', 'pages');
+        $app['config']->set('translatable-revisions.revision_templates_table_name', 'revision_templates');
+        $app['config']->set('translatable-revisions.revision_meta_table_name', 'revision_meta');
+        $app['config']->set('translatable-revisions.revision_template_fields_table_name', 'revision_template_fields');
 
 
-        include_once(__DIR__  . '/../database/migrations/create_pages_table.php.stub');
-        (new \CreatePagesTable())->up();
+        include_once(__DIR__  . '/../database/migrations/create_translatable_revisions_table.php.stub');
+        (new \CreateTranslatableRevisionsTable())->up();
 
-        include_once(__DIR__  . '/../database/migrations/create_page_templates_table.php.stub');
-        (new \CreatePageTemplatesTable())->up();
+        include_once(__DIR__  . '/../database/migrations/create_translatable_revision_templates_table.php.stub');
+        (new \CreateRevisionTemplatesTable())->up();
 
-        include_once(__DIR__  . '/../database/migrations/create_page_meta_table.php.stub');
-        (new \CreatePageMetaTable())->up();
+        include_once(__DIR__  . '/../database/migrations/create_translatable_revision_meta_table.php.stub');
+        (new \CreateRevisionMetaTable())->up();
 
-        include_once(__DIR__  . '/../database/migrations/create_page_template_fields_table.php.stub');
-        (new \CreatePageTemplateFieldsTable())->up();
+        include_once(__DIR__  . '/../database/migrations/create_translatable_revision_template_fields_table.php.stub');
+        (new \CreateRevisionTemplateFieldsTable())->up();
 
         include_once(__DIR__  . '/../database/migrations/create_i18n_tables.php.stub');
         (new \CreateI18nTables())->up();

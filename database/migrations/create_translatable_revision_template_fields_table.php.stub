@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePageTemplateFieldsTable extends Migration
+class CreateRevisionTemplateFieldsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,12 @@ class CreatePageTemplateFieldsTable extends Migration
      */
     public function up()
     {
-        $tableName = config('page-module.page_template_fields_table_name');
+        $tableName = config('translatable-revisions.revision_template_fields_table_name');
 
         Schema::create($tableName, function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('template_id');
-            $table->foreign('template_id')->references('id')->on(config('page-module.page_templates_table_name'))->onDelete('cascade');
+            $table->foreign('template_id')->references('id')->on(config('translatable-revisions.revision_templates_table_name'))->onDelete('cascade');
             $table->string('name');
             $table->string('key');
             $table->string('type');

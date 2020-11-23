@@ -1,19 +1,19 @@
 <?php
 
-namespace Infab\PageModule\Database\Factories;
+namespace Infab\TranslatableRevisions\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Infab\PageModule\Models\PageTemplate;
+use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Illuminate\Support\Str;
 
-class PageTemplateFactory extends Factory
+class RevisionTemplateFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var string
      */
-    protected $model = PageTemplate::class;
+    protected $model = RevisionTemplate::class;
 
     /**
      * Define the model's default state.

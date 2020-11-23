@@ -1,19 +1,20 @@
 <?php
 
-namespace Infab\PageModule\Traits;
+namespace Infab\TranslatableRevisions\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Infab\PageModule\Events\DefinitionsPublished;
-use Infab\PageModule\Events\DefinitionsUpdated;
-use Infab\PageModule\Models\I18nDefinition;
-use Infab\PageModule\Models\I18nLocale;
-use Infab\PageModule\Models\I18nTerm;
-use Infab\PageModule\Models\PageMeta;
-use Infab\PageModule\Models\PageTemplate;
-use Infab\PageModule\Models\PageTemplateField;
+use Infab\TranslatableRevisions\Events\DefinitionsPublished;
+use Infab\TranslatableRevisions\Events\DefinitionsUpdated;
+use Infab\TranslatableRevisions\Models\I18nDefinition;
+use Infab\TranslatableRevisions\Models\I18nLocale;
+use Infab\TranslatableRevisions\Models\I18nTerm;
+use Infab\TranslatableRevisions\Models\RevisionMeta;
+use Infab\TranslatableRevisions\Models\RevisionTemplate;
+use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 
 trait HasTranslatedRevisions
 {
@@ -32,12 +33,12 @@ trait HasTranslatedRevisions
 
     public function template() : BelongsTo
     {
-        return $this->belongsTo(PageTemplate::class, 'template_id', 'id');
+        return $this->belongsTo(RevisionTemplate::class, 'template_id', 'id');
     }
 
-    public function meta() : HasMany
+    public function meta(): MorphMany
     {
-        return $this->hasMany(PageMeta::class);
+        return $this->morphMany(RevisionMeta::class, 'model');
     }
 
     /**
@@ -52,7 +53,7 @@ trait HasTranslatedRevisions
         $this->setLocale($locale);
 
         $definitions = collect($fieldData)->map(function ($data, $field) use ($revision) {
-            $templateField = PageTemplateField::where('key', $field)->first();
+            $templateField = RevisionTemplateField::where('key', $field)->first();
             $identifier = 'page_' . $this->id .'_'. $revision . '_' . $field;
 
 
@@ -83,10 +84,11 @@ trait HasTranslatedRevisions
                     return $item;
                 });
 
-                $updated = PageMeta::updateOrCreate(
+                $updated = RevisionMeta::updateOrCreate(
                     ['meta_key' => $field,
-                    'page_id' => $this->id,
-                    'page_version' => $revision],
+                    'model_id' => $this->id,
+                    'model_type' => self::class,
+                    'model_version' => $revision],
                     [
                         'meta_value' => $multiData->toJson()
                     ]
@@ -134,8 +136,8 @@ trait HasTranslatedRevisions
                 if(! $field->repeater) {
                     return collect([$field->key => '']);
                 }
-                // Check pagemeta
-                $meta = $this->meta()->where('page_version', $revision)->first();
+                // Check RevisionMeta
+                $meta = $this->meta()->where('model_version', $revision)->first();
                 if (! $meta) {
                     return collect([]);
                 }

@@ -1,9 +1,9 @@
 <?php
 
-namespace Infab\PageModule\Models;
+namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Infab\PageModule\Models\I18nDefinition;
+use Infab\TranslatableRevisions\Models\I18nDefinition;
 
 class I18nTerm extends Model
 {
@@ -12,7 +12,7 @@ class I18nTerm extends Model
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {
-            $this->setTable(config('page-module.i18n_table_prefix_name') . 'i18n_terms');
+            $this->setTable(config('translatable-revisions.i18n_table_prefix_name') . 'i18n_terms');
         }
 
         parent::__construct($attributes);

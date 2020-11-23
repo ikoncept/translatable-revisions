@@ -1,6 +1,6 @@
 {
-    "name": "infab/page-module",
-    "description": "Drop in page module for Laravel",
+    "name": "infab/translatable-revisions",
+    "description": "Translatable revisions for Laravel",
     "type": "library",
     "require": {
         "php": "^7.3",
@@ -25,19 +25,19 @@
     ],
     "autoload": {
         "psr-4": {
-            "Infab\\PageModule\\": "src/",
-            "Infab\\PageModule\\Database\\Factories\\": "database/factories"
+            "Infab\\TranslatableRevisions\\": "src/",
+            "Infab\\TranslatableRevisions\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
-        "psr-4": {"Infab\\PageModule\\Tests\\": "tests"}
+        "psr-4": {"Infab\\TranslatableRevisions\\Tests\\": "tests"}
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "extra": {
         "laravel": {
             "providers": [
-                "Infab\\PageModule\\PageModuleServiceProvider"
+                "Infab\\TranslatableRevisions\\TranslatableRevisionsServiceProvider"
             ]
         }
     }

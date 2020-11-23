@@ -1,10 +1,10 @@
 <?php
 
-namespace Infab\PageModule\Database\Factories;
+namespace Infab\TranslatableRevisions\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Infab\PageModule\Models\Page;
-use Infab\PageModule\Models\PageTemplate;
+use Infab\TranslatableRevisions\Models\Page;
+use Infab\TranslatableRevisions\Models\RevisionTemplate;
 
 class PageFactory extends Factory
 {
@@ -24,7 +24,7 @@ class PageFactory extends Factory
     {
         return [
             'title' => $this->faker->words(3, true),
-            'template_id' => PageTemplate::factory()->create()->id
+            'template_id' => RevisionTemplate::factory()->create()->id
         ];
     }
 }

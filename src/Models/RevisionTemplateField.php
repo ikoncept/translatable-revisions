@@ -1,11 +1,11 @@
 <?php
-namespace Infab\PageModule\Models;
+namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Infab\PageModule\Database\Factories\PageTemplateFieldFactory;
+use Infab\TranslatableRevisions\Database\Factories\RevisionTemplateFieldFactory;
 
-class PageTemplateField extends Model {
+class RevisionTemplateField extends Model {
 
     use HasFactory;
 
@@ -14,7 +14,7 @@ class PageTemplateField extends Model {
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {
-            $this->setTable(config('page-module.page_template_fields_table_name'));
+            $this->setTable(config('translatable-revisions.revision_template_fields_table_name'));
         }
 
         parent::__construct($attributes);
@@ -22,6 +22,6 @@ class PageTemplateField extends Model {
 
     protected static function newFactory()
     {
-        return PageTemplateFieldFactory::new();
+        return RevisionTemplateFieldFactory::new();
     }
 }

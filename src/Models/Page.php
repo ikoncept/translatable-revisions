@@ -1,10 +1,10 @@
 <?php
-namespace Infab\PageModule\Models;
+namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Infab\PageModule\Database\Factories\PageFactory;
-use Infab\PageModule\Traits\HasTranslatedRevisions;
+use Infab\TranslatableRevisions\Database\Factories\PageFactory;
+use Infab\TranslatableRevisions\Traits\HasTranslatedRevisions;
 use Illuminate\Support\Str;
 
 class Page extends Model
@@ -22,7 +22,7 @@ class Page extends Model
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {
-            $this->setTable(config('page-module.pages_table_name'));
+            $this->setTable(config('translatable-revisions.revisions_table_name'));
         }
 
         parent::__construct($attributes);

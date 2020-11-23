@@ -1,8 +1,8 @@
 <?php
 
-namespace Infab\PageModule\Tests;
+namespace Infab\TranslatableRevisions\Tests;
 
-use Infab\PageModule\Tests\TestCase;
+use Infab\TranslatableRevisions\Tests\TestCase;
 
 class AssetPublishTest extends TestCase
 {
@@ -10,7 +10,7 @@ class AssetPublishTest extends TestCase
     public function it_can_publish_assets()
     {
         $this->artisan('vendor:publish', [
-            '--provider' => 'Infab\PageModule\PageModuleServiceProvider',
+            '--provider' => 'Infab\TranslatableRevisions\TranslatableRevisionsServiceProvider',
         ])
         ->assertExitCode(0);
     }

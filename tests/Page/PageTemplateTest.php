@@ -1,31 +1,31 @@
 <?php
 
-namespace Infab\PageModule\Tests\Page;
+namespace Infab\TranslatableRevisions\Tests\Page;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Infab\PageModule\Models\Page;
-use Infab\PageModule\Models\PageTemplate;
-use Infab\PageModule\Models\PageTemplateField;
-use Infab\PageModule\Tests\TestCase;
+use Infab\TranslatableRevisions\Models\Page;
+use Infab\TranslatableRevisions\Models\RevisionTemplate;
+use Infab\TranslatableRevisions\Models\RevisionTemplateField;
+use Infab\TranslatableRevisions\Tests\TestCase;
 
-class PageTemplateTest extends TestCase
+class RevisionTemplateTest extends TestCase
 {
     use RefreshDatabase;
 
     /** @test **/
     public function it_can_get_a_representation_of_a_page_template_model()
     {
-        $pageTemplate = new PageTemplate();
+        $RevisionTemplate = new RevisionTemplate();
 
-        $this->assertInstanceOf(PageTemplate::class, $pageTemplate);
+        $this->assertInstanceOf(RevisionTemplate::class, $RevisionTemplate);
     }
 
     /** @test **/
     public function a_template_can_have_many_template_fields()
     {
         // Arrange
-        $template = PageTemplate::factory()->create();
-        $templateFields = PageTemplateField::factory()->count(6)->create([
+        $template = RevisionTemplate::factory()->create();
+        $templateFields = RevisionTemplateField::factory()->count(6)->create([
             'template_id' => $template->id
         ]);
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Infab\PageModule\Events;
+namespace Infab\TranslatableRevisions\Events;
 
 use Illuminate\Support\Collection;
 
