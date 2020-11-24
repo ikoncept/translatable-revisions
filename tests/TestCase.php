@@ -27,13 +27,13 @@ abstract class TestCase extends Orchestra
         (new \CreateTranslatableRevisionsTable())->up();
 
         include_once(__DIR__  . '/../database/migrations/create_translatable_revision_templates_table.php.stub');
-        (new \CreateRevisionTemplatesTable())->up();
+        (new \CreateTranslatableRevisionTemplatesTable())->up();
 
         include_once(__DIR__  . '/../database/migrations/create_translatable_revision_meta_table.php.stub');
-        (new \CreateRevisionMetaTable())->up();
+        (new \CreateTranslatableRevisionMetaTable())->up();
 
         include_once(__DIR__  . '/../database/migrations/create_translatable_revision_template_fields_table.php.stub');
-        (new \CreateRevisionTemplateFieldsTable())->up();
+        (new \CreateTranslatableRevisionTemplateFieldsTable())->up();
 
         include_once(__DIR__  . '/../database/migrations/create_i18n_tables.php.stub');
         (new \CreateI18nTables())->up();
