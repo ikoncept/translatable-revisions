@@ -33,3 +33,9 @@ test74:
   image: php:7.4
   script:
     - vendor/bin/phpunit --coverage-text --colors=never --testdox
+
+# Test on PHP 8.0
+test74:
+  image: php:8.0
+  script:
+    - vendor/bin/phpunit --coverage-text --colors=never --testdox
