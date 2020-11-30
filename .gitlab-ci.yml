@@ -36,7 +36,7 @@ test74:
 
 # Test on PHP 8.0
 test80:
-  image: php:8.0
+  image: php:8.0-rc
   script:
     - vendor/bin/phpunit --coverage-text --colors=never --testdox
 
