@@ -20,6 +20,11 @@ class RevisionTemplate extends Model
         parent::__construct($attributes);
     }
 
+    /**
+     * Create a new factory
+     *
+     * @return RevisionTemplateFactory
+     */
     protected static function newFactory()
     {
         return RevisionTemplateFactory::new();

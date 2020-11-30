@@ -11,6 +11,11 @@ class Page extends Model
 {
     use HasFactory, HasTranslatedRevisions;
 
+    /**
+     * Create a new factory
+     *
+     * @return PageFactory
+     */
     protected static function newFactory()
     {
         return PageFactory::new();
@@ -28,6 +33,12 @@ class Page extends Model
         parent::__construct($attributes);
     }
 
+    /**
+     * Set the title attribute/slug
+     *
+     * @param mixed $value
+     * @return void
+     */
     public function setTitleAttribute($value)
     {
         $this->attributes['title'] = $value;

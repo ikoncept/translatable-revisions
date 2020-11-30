@@ -4,6 +4,7 @@ namespace Infab\TranslatableRevisions\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Infab\TranslatableRevisions\Events\DefinitionsPublished;
@@ -17,9 +18,27 @@ use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 
 trait HasTranslatedRevisions
 {
-    public $locale;
+    /**
+     * locale
+     *
+     * @var string
+     */
+    public $locale = '';
 
-    public function setLocale($locale)
+    /**
+     * revisionNumber
+     *
+     * @var int
+     */
+    public $revisionNumber = 1;
+
+    /**
+     * Set the locale, with fallback
+     *1
+     * @param string $locale
+     * @return string
+     */
+    public function setLocale($locale) : string
     {
         if ($locale) {
             $this->locale = $locale;
@@ -30,64 +49,70 @@ trait HasTranslatedRevisions
         return $this->locale;
     }
 
+    /**
+     * Sets the revision, with default fallback
+     *
+     * @param integer|null $revisionNumber
+     * @return int
+     */
+    public function setRevision($revisionNumber) : int
+    {
+        $this->revisionNumber = $this->revision;
+
+        if ($revisionNumber) {
+            $this->revisionNumber = $revisionNumber;
+        }
+
+        return (int) $this->revisionNumber;
+    }
+
+    /**
+     * Relation for revisiontemplates
+     *
+     * @return BelongsTo
+     */
     public function template() : BelongsTo
     {
         return $this->belongsTo(RevisionTemplate::class, 'template_id', 'id');
     }
 
+    /**
+     * Relation for meta
+     *
+     * @return MorphMany
+     */
     public function meta(): MorphMany
     {
         return $this->morphMany(RevisionMeta::class, 'model');
     }
 
     /**
-     * Update content for multiple fields
+     * Update content for fields
      *
      * @param array $fieldData
-     * @param string $locale
+     * @param string|null $locale
+     * @param int|null $revision
      * @return Collection
      */
-    public function updateContent(array $fieldData, $revision = 1, $locale = null) : Collection
+    public function updateContent(array $fieldData, $locale = null, $revision = null) : Collection
     {
+        // Revision is always the current, if not overridden
         $this->setLocale($locale);
+        $this->setRevision($revision);
 
-        $definitions = collect($fieldData)->map(function ($data, $field) use ($revision) {
-            $templateField = RevisionTemplateField::where('key', $field)->first();
-            $identifier = 'page_' . $this->id .'_'. $revision . '_' . $field;
+        $definitions = collect($fieldData)->map(function ($data, $fieldKey) {
+            $templateField = RevisionTemplateField::where('key', $fieldKey)->first();
+            $identifier = 'page_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
 
 
-            // Create or update definition
-
-            // Hmm, an array
-            if (is_array($data)) {
-                $multiData = collect($data)->map(function ($item, $index) use ($field, $revision, $templateField) {
-                    $item = collect($item)->map(function ($subfield, $key) use ($revision, $field, $index, $templateField) {
-                        $identifier = 'page_' . $this->id . '_' . $revision . '_' . $field . '__' . $index . '_' . $key;
-
-                        // Create/Update the term
-                        $term = I18nTerm::updateOrCreate(
-                            ['key' => $identifier],
-                            ['description' => $templateField->name . ' for ' . $this->title]
-                        );
-
-                        $definition = I18nDefinition::updateOrCreate(
-                            [
-                                'term_id' => $term->id,
-                                'locale' => $this->locale
-                            ],
-                            ['content' => $subfield]
-                        );
-
-                        return $identifier;
-                    });
-                    return $item;
-                });
+            if (is_array($data) && ! Arr::isAssoc($data)) {
+                $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
 
                 $updated = RevisionMeta::updateOrCreate(
-                    ['meta_key' => $field,
+                    ['meta_key' => $fieldKey,
                     'model_id' => $this->id,
                     'model_type' => self::class,
-                    'model_version' => $revision],
+                    'model_version' => $this->revisionNumber],
                     [
                         'meta_value' => $multiData->toJson()
                     ]
@@ -117,6 +142,13 @@ trait HasTranslatedRevisions
         return $definitions;
     }
 
+    /**
+     * Get the content for the field
+     *
+     * @param integer|null $revision
+     * @param string|null $locale
+     * @return Collection
+     */
     public function getFieldContent($revision = 1, $locale = null) : Collection
     {
         $this->setLocale($locale);
@@ -165,6 +197,12 @@ trait HasTranslatedRevisions
         return $contentMap;
     }
 
+    /**
+     * Removes old revisions
+     *
+     * @param int $revision
+     * @return void
+     */
     public function purgeOldRevisions($revision)
     {
         $identifier = 'page_' . $this->id .'_'. $revision . '_' ;
@@ -180,7 +218,7 @@ trait HasTranslatedRevisions
      * Publish a specified revision
      *
      * @param int $revision
-     * @return void
+     * @return mixed
      */
     public function publish(int $revision)
     {
@@ -193,7 +231,7 @@ trait HasTranslatedRevisions
                 $this->published_version = $revision;
                 $this->revision = $revision + 1;
                 $this->published_at = now();
-                $this->updateContent($content->toArray(), $this->revision, $locale->iso_code);
+                $this->updateContent($content->toArray(), $locale->iso_code, $this->revision);
                 $this->save();
 
                 $this->purgeOldRevisions($oldRevision);
@@ -203,5 +241,39 @@ trait HasTranslatedRevisions
         app()->events->dispatch(new DefinitionsPublished($updatedContent, $this));
 
         return $this;
+    }
+
+    /**
+     * Handles sequentials arrays, used for repeaters
+     *
+     * @param array $data
+     * @param string $fieldKey
+     * @param RevisionTemplateField $templateField
+     * @return Collection
+     */
+    protected function handleSequentialArray(array $data, $fieldKey, $templateField) : Collection
+    {
+        return collect($data)->map(function ($item, $index) use ($fieldKey, $templateField) {
+            $item = collect($item)->map(function ($subfield, $key) use ($fieldKey, $index, $templateField) {
+                $identifier = 'page_' . $this->id . '_' . $this->revisionNumber . '_' . $fieldKey . '__' . $index . '_' . $key;
+
+                // Create/Update the term
+                $term = I18nTerm::updateOrCreate(
+                    ['key' => $identifier],
+                    ['description' => $templateField->name . ' for ' . $this->title]
+                );
+
+                I18nDefinition::updateOrCreate(
+                    [
+                        'term_id' => $term->id,
+                        'locale' => $this->locale
+                    ],
+                    ['content' => $subfield]
+                );
+
+                return $identifier;
+            });
+            return $item;
+        });
     }
 }

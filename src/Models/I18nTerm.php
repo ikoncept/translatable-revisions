@@ -3,6 +3,7 @@
 namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Infab\TranslatableRevisions\Models\I18nDefinition;
 
 class I18nTerm extends Model
@@ -18,7 +19,12 @@ class I18nTerm extends Model
         parent::__construct($attributes);
     }
 
-    public function definitions()
+    /**
+     * Definition relation
+     *
+     * @return HasMany
+     */
+    public function definitions() : HasMany
     {
         return $this->hasMany(I18nDefinition::class, 'term_id');
     }

@@ -86,11 +86,11 @@ class PageTest extends TestCase
         $key = $templateFields->first()->toArray()['key'];
         $fields = $page->updateContent([
             $key => 'En hel del saker'
-        ], 10, 'sv');
+        ], 'sv');
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'En hel del saker',
+            'content' => json_encode('En hel del saker'),
             'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_terms', [
@@ -130,14 +130,14 @@ class PageTest extends TestCase
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
             ]
-        ], 10);
+        ]);
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'The page title for the page'
+            'content' => json_encode('The page title for the page')
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'The page title for the page'
+            'content' => json_encode('The page title for the page')
         ]);
 
         $this->assertDatabaseHas('i18n_terms', [
@@ -170,15 +170,15 @@ class PageTest extends TestCase
 
         $this->assertDatabaseHas('i18n_definitions', [
             'locale' => 'en',
-            'content' => 'https://google.com',
+            'content' => json_encode('https://google.com'),
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
             'locale' => 'en',
-            'content' => 'https://bog.com',
+            'content' => json_encode('https://bog.com'),
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
             'locale' => 'en',
-            'content' => 'http://flank.se',
+            'content' => json_encode('http://flank.se'),
         ]);
     }
 
@@ -211,19 +211,19 @@ class PageTest extends TestCase
 
         $fields = $page->updateContent([
             $key => 'En hel del saker'
-        ], 1, 'sv');
+        ], 1, 'sv', 1);
 
         $revisionFields = $page->updateContent([
             $key => 'What, helt annat'
-        ], 2, 'sv');
+        ], 'sv', 2);
 
         $enFields = $page->updateContent([
             $key => 'A bunch of things'
-        ], 1, 'en');
+        ], 'en', 1);
 
         $enRevisionFields = $page->updateContent([
             $key => 'What, something completeley different!'
-        ], 2, 'en');
+        ], 'en', 2);
 
 
         // Act
@@ -241,16 +241,16 @@ class PageTest extends TestCase
             'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'What, helt annat',
+            'content' => json_encode('What, helt annat'),
             'locale' => 'sv'
         ]);
 
         $this->assertDatabaseMissing('i18n_definitions', [
-            'content' => 'A bunch of things',
+            'content' => json_encode('A bunch of things'),
             'locale' => 'en'
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => 'What, something completeley different!',
+            'content' => json_encode('What, something completeley different!'),
             'locale' => 'en'
         ]);
 

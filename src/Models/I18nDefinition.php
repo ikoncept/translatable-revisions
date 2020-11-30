@@ -8,6 +8,10 @@ class I18nDefinition extends Model
 {
     protected $fillable = ['content', 'locale', 'term_id'];
 
+    protected $casts = [
+        'content' => 'array'
+    ];
+
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {

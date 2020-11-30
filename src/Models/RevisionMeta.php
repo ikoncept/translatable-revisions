@@ -21,6 +21,11 @@ class RevisionMeta extends Model
         parent::__construct($attributes);
     }
 
+    /**
+     * Creat a new factory
+     *
+     * @return RevisionMetaFactory
+     */
     protected static function newFactory()
     {
         return RevisionMetaFactory::new();

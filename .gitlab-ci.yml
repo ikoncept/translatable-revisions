@@ -39,3 +39,8 @@ test80:
   image: php:8.0
   script:
     - vendor/bin/phpunit --coverage-text --colors=never --testdox
+
+static_analysis:
+  image: php:7.4
+  script:
+    - php --version && php -d memory_limit=512M vendor/bin/phpstan analyse -c phpstan.neon

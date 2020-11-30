@@ -40,7 +40,7 @@ class CreateI18nTables extends Migration
             $table->unsignedBigInteger('term_id');
             $table->foreign('term_id')->references('id')->on($prefix . 'i18n_terms')->onDelete('cascade');
             $table->string('locale');
-            $table->longText('content')->nullable();
+            $table->json('content')->nullable();
             $table->boolean('approved')->default(0);
             $table->timestamps();
 

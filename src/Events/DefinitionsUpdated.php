@@ -7,23 +7,24 @@ use Illuminate\Support\Collection;
 class DefinitionsUpdated
 {
     /**
-     * The newly updated definitions.
+     * Model
      *
-     * @var
-     */
-    public $definitions;
-
-    /**
-     * The newly updated model.
-     *
+     * @var mixed
      */
     public $model;
+
+    /**
+     * The newly published definitions.
+     *
+     * @var Collection
+     */
+    public $definitions;
 
     /**
      * Create a new event instance.
      *
      * @param Collection $definitions
-     * @param $model
+     * @param mixed $model
      * @return void
      */
     public function __construct(Collection $definitions, $model)

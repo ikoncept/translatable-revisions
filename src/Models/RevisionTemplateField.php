@@ -20,6 +20,11 @@ class RevisionTemplateField extends Model {
         parent::__construct($attributes);
     }
 
+    /**
+     * Create a new factory
+     *
+     * @return RevisionTemplateFieldFactory
+     */
     protected static function newFactory()
     {
         return RevisionTemplateFieldFactory::new();
