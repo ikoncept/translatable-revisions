@@ -36,12 +36,6 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
-      - name: Prepare the application
-        run: |
-          php -r "file_exists('.env') || copy('.env.example', '.env');"
-          php artisan key:generate
-      - name: Clear Config
-        run: php artisan config:clear
       - name: Test with phpunit
         run: vendor/bin/phpunit --coverage-text --testdox
       - name: PHPStan level 7
