@@ -1,5 +1,5 @@
 # GitHub Action for Laravel
-name: tests
+name: PHPStan
 on:
   push:
     branches: [ main, develop ]
@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         operating-system: [ubuntu-latest]
-        php-versions: ['7.3', '7.4']
+        php-versions: ['7.3', '7.4', '8.0']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -36,7 +36,5 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
-      - name: Test with phpunit
-        run: vendor/bin/phpunit --coverage-text --testdox
       - name: PHPStan level 7
         run: "php -d memory_limit=512M ./vendor/bin/phpstan analyse -c phpstan.neon"
