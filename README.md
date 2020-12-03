@@ -1,6 +1,6 @@
 # infab/translatable-revisions
 
-[![php_stan](https://img.shields.io/badge/PHPStan-level%207-brightgreen.svg)](https://gitlab.com/infab/translatable-revisions/-/commits/main)
+[![PHPStan]((https://github.com/ikoncept/translatable-revisions/workflows/PHPStan/badge.svg)](https://github.com/ikoncept/translatable-revisions/commit/main)
 
 
 Translatable revisions for Laravel
