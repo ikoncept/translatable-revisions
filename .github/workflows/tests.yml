@@ -1,5 +1,5 @@
 # GitHub Action for Laravel
-name: phpunit
+name: tests
 on:
   push:
     branches: [ main, develop ]
