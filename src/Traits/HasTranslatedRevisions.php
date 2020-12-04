@@ -170,7 +170,7 @@ trait HasTranslatedRevisions
                 // Check RevisionMeta
                 $meta = $this->meta()->where('model_version', $revision)->first();
                 if (! $meta) {
-                    return collect([]);
+                    return collect([$field['key'] => []]);
                 }
                 $multiContent = collect(json_decode($meta->meta_value, true))->map(function ($item) {
                     $content = collect($item)->map(function ($metaKey) {
