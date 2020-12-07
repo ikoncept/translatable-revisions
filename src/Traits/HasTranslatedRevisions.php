@@ -168,7 +168,9 @@ trait HasTranslatedRevisions
                     return collect([$field->key => '']);
                 }
                 // Check RevisionMeta
-                $meta = $this->meta()->where('model_version', $revision)->first();
+                $meta = $this->meta()->where('model_version', $revision)
+                    ->where('meta_key', $field->key)
+                    ->first();
                 if (! $meta) {
                     return collect([$field['key'] => []]);
                 }
