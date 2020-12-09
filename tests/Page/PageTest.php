@@ -125,6 +125,7 @@ class PageTest extends TestCase
         // Act
         $fields = $page->updateContent([
             'page_title' => 'The page title for the page',
+            // 'image' => 71,
             'boxes' => [
                 ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
@@ -139,6 +140,7 @@ class PageTest extends TestCase
         $this->assertDatabaseHas('i18n_definitions', [
             'content' => json_encode('The page title for the page')
         ]);
+        $terms = DB::table('i18n_terms')->get();
 
         $this->assertDatabaseHas('i18n_terms', [
             'key' => 'pages_' . $page->id .'_'. $page->revision . '_page_title',
@@ -299,5 +301,35 @@ class PageTest extends TestCase
         // Assert
         $this->assertEquals(3, count($content['boxes']));
         Event::assertDispatched(DefinitionsUpdated::class);
+    }
+
+    /** @test **/
+    public function it_can_get_revision_meta_image()
+    {
+        // Arrange
+        $template = RevisionTemplate::factory()->create();
+        $imageField = RevisionTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'type' => 'image',
+            'name' => 'image',
+            'translated' => false,
+            'key' => 'what_image'
+        ]);
+        $page = Page::factory()->create([
+            'template_id' => $template->id,
+            'revision' => 10
+        ]);
+
+        // Act
+        $fields = $page->updateContent([
+            'what_image' => [71, 80, 90]
+        ]);
+
+        // Assert
+        $content = $page->fresh()->getFieldContent(10);
+        $this->assertArrayHasKey('what_image', $content);
+        $this->assertContains(71, $content['what_image']);
+        $this->assertContains(80, $content['what_image']);
+        $this->assertContains(90, $content['what_image']);
     }
 }

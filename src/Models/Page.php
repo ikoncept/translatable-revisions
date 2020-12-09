@@ -11,6 +11,23 @@ class Page extends Model
 {
     use HasFactory, HasTranslatedRevisions;
 
+    public function getRevisionSettings()
+    {
+        return [
+            'image' => [
+                'model' => Page::class,
+                'transformer' => PageTransformer::class
+            ]
+        ];
+    }
+
+    public function getImages(array $ids = [])
+    {
+        return collect($ids);
+    }
+
+
+
     /**
      * Create a new factory
      *

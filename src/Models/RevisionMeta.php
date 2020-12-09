@@ -12,6 +12,10 @@ class RevisionMeta extends Model
 
     protected $fillable = ['meta_key', 'meta_value', 'model_id', 'model_type', 'model_version'];
 
+    protected $casts = [
+        'meta_value' => 'array'
+    ];
+
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {

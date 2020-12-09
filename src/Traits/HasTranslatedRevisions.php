@@ -16,6 +16,7 @@ use Infab\TranslatableRevisions\Models\I18nTerm;
 use Infab\TranslatableRevisions\Models\RevisionMeta;
 use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Infab\TranslatableRevisions\Models\RevisionTemplateField;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 trait HasTranslatedRevisions
 {
@@ -107,7 +108,12 @@ trait HasTranslatedRevisions
 
 
             if (is_array($data) && ! Arr::isAssoc($data)) {
-                $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
+                if ($templateField->type == 'image') {
+                    $multiData = $data;
+                } else {
+                    $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
+                }
+
 
                 $updated = RevisionMeta::updateOrCreate(
                     ['meta_key' => $fieldKey,
@@ -115,7 +121,7 @@ trait HasTranslatedRevisions
                     'model_type' => self::class,
                     'model_version' => $this->revisionNumber],
                     [
-                        'meta_value' => $multiData->toJson()
+                        'meta_value' => $multiData
                     ]
                 );
 
@@ -153,6 +159,7 @@ trait HasTranslatedRevisions
     public function getFieldContent($revision = 1, $locale = null) : Collection
     {
         $this->setLocale($locale);
+        $this->setRevision($this->revision);
         $content = [];
         foreach ($this->template->fields as $field) {
             $term =  $this->getTable() . '_' . $this->id .'_'. $revision . '_' . $field->key;
@@ -190,12 +197,12 @@ trait HasTranslatedRevisions
      * @param string $termKey
      * @param RevisionTemplateField $field
      * @param bool $full
-     * @return string
+     * @return mixed
      */
-    public function translateField(string $termKey, RevisionTemplateField $field, $full = false) : string
+    public function translateField(string $termKey, RevisionTemplateField $field, $full = false)
     {
         if (!$full) {
-            $translated = $this->translateByKey($termKey);
+            $translated = $this->translateByKey($termKey, $field);
 
             return $translated == $termKey ? '' : $translated;
         }
@@ -207,9 +214,9 @@ trait HasTranslatedRevisions
      * Translate by term key
      *
      * @param string $termKey
-     * @return string
+     * @return mixed
      */
-    public function translateByKey(string $termKey) : string
+    public function translateByKey(string $termKey, $field = null) : Collection
     {
         if (!$termKey) {
             return '';
@@ -221,8 +228,28 @@ trait HasTranslatedRevisions
                 ['key', '=', $termKey],
                 ['locale', '=', $this->locale]
             ])->value('content');
+        $value = json_decode($value, true);
 
-        return $value ? $value : $termKey;
+
+        // if ($field) {
+        //     if ($field->type == 'image') {
+        //         dd('get help from model options how can we get the image?');
+        //     }
+        // }
+
+        if ($field) {
+            if ($field->type == 'image') {
+                if (isset($value['meta_value'])) {
+                    $media = $this->getImages($value['meta_value']);
+                    if ($media) {
+                        $value = $media;
+                    } else {
+                        $value = [];
+                    }
+                }
+            }
+        }
+        return collect($value);
     }
 
 
@@ -233,33 +260,37 @@ trait HasTranslatedRevisions
      * @param RevisionTemplateField $field
      * @return array
      */
-    public function getMeta($termKey, RevisionTemplateField $field) : array
+    public function getMeta($termKey, RevisionTemplateField $field)
     {
         $meta = $this->meta()->where('meta_key', $field->key)
             ->where('model_version', $this->revisionNumber)
             ->first();
-        if (!$meta) {
+
+        if (! $meta) {
             $meta = new RevisionMeta();
         }
 
         $metaValue = $meta->meta_value;
-        $value = [];
+        $value = null;
 
         switch ($field->type) {
             case 'repeater':
                 $value = $this->getRepeater($metaValue);
                 break;
+            case 'image':
+                $value = $this->getImages($metaValue ?? []);
+                break;
             default:
                 $value = $metaValue;
         }
 
-        return $value;
+        return $value ? $value : null;
     }
 
     /**
      * Get repeater
      *
-     * @param string $data
+     * @param array $data
      * @return array
      */
     public function getRepeater($data) : array
@@ -267,8 +298,7 @@ trait HasTranslatedRevisions
         if (! $data) {
             return [];
         }
-        $repeater = json_decode($data, true);
-
+        $repeater = $data;
 
         foreach ($repeater as &$field) {
             foreach ($field as $key => $termKey) {
