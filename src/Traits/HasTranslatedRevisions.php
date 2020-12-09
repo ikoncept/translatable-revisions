@@ -243,7 +243,7 @@ trait HasTranslatedRevisions
         }
 
         $metaValue = $meta->meta_value;
-        $value = null;
+        $value = [];
 
         switch ($field->type) {
             case 'repeater':
