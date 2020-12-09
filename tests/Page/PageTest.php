@@ -94,7 +94,7 @@ class PageTest extends TestCase
             'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_' . $key,
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_' . $key,
             'description' => $templateFields->first()->name . ' for ' . $page->title
         ]);
     }
@@ -141,29 +141,29 @@ class PageTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_page_title',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_page_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__0_url',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__0_url',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__1_url',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__1_url',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__2_url',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__2_url',
         ]);
 
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_page_title',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_page_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__0_title',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__0_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__1_title',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__1_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'page_' . $page->id .'_'. $page->revision . '_boxes__2_title',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__2_title',
         ]);
 
 
@@ -271,11 +271,11 @@ class PageTest extends TestCase
         ]);
         $boxField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
-            'translated' => true,
+            'translated' => false,
             'key' => 'boxes',
             'name' => 'Boxes',
             'repeater' => true,
-            'type' => 'grid'
+            'type' => 'repeater'
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
@@ -291,7 +291,7 @@ class PageTest extends TestCase
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
             ]
-        ], 10);
+        ]);
 
         // Act
         $content = $page->getFieldContent(10);
