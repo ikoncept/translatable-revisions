@@ -20,9 +20,15 @@ use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 
 trait HasTranslatedRevisions
 {
-    protected RevisionOptions $revisionOptions;
-
     abstract public function getRevisionOptions(): RevisionOptions;
+
+    /**
+     * Revision Options
+     *
+     * @var RevisionOptions
+     */
+    protected  $revisionOptions;
+
 
     /**
      * locale
@@ -40,7 +46,7 @@ trait HasTranslatedRevisions
 
     /**
      * Set the locale, with fallback
-     *1
+     *
      * @param string $locale
      * @return string
      */
