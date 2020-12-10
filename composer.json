@@ -44,8 +44,8 @@
     },
     "scripts": {
         "test": [
-            "php --version && vendor/bin/phpunit --coverage-text --testdox",
-            "php --version && php -d memory_limit=512M ./vendor/bin/phpstan analyse -c phpstan.neon"
+            "php --version && php -d memory_limit=512M ./vendor/bin/phpstan analyse -c phpstan.neon",
+            "php --version && vendor/bin/phpunit --coverage-text --testdox"
         ]
     }
 }
