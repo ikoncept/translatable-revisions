@@ -7,20 +7,23 @@ class RevisionOptions {
     /**
      * Types that require special care,
      * for example files, images etc
+     * @var array $specialTypes
      */
-    public array $specialTypes = [];
+    public $specialTypes = [];
 
     /**
      * Getters, specify how the fields should
      * be represented or transformed
+     * @var array $getters
      */
-    public array $getters = [];
+    public $getters = [];
 
 
     /**
      * Default included getters
+     * @var array $getters
      */
-    public array $defaultGetters = ['repeater' => 'getRepeater'];
+    public $defaultGetters = ['repeater' => 'getRepeater'];
 
     public static function create(): self
     {
