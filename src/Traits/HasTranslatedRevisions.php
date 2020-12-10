@@ -2,6 +2,7 @@
 
 namespace Infab\TranslatableRevisions\Traits;
 
+use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Arr;
@@ -16,10 +17,13 @@ use Infab\TranslatableRevisions\Models\I18nTerm;
 use Infab\TranslatableRevisions\Models\RevisionMeta;
 use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Infab\TranslatableRevisions\Models\RevisionTemplateField;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 trait HasTranslatedRevisions
 {
+    protected RevisionOptions $revisionOptions;
+
+    abstract public function getRevisionOptions(): RevisionOptions;
+
     /**
      * locale
      *
@@ -214,9 +218,10 @@ trait HasTranslatedRevisions
      * Translate by term key
      *
      * @param string $termKey
+     * @param RevisionTemplateField|null $field
      * @return mixed
      */
-    public function translateByKey(string $termKey, $field = null) : Collection
+    public function translateByKey(string $termKey, ?RevisionTemplateField $field = null)
     {
         if (!$termKey) {
             return '';
@@ -231,12 +236,6 @@ trait HasTranslatedRevisions
         $value = json_decode($value, true);
 
 
-        // if ($field) {
-        //     if ($field->type == 'image') {
-        //         dd('get help from model options how can we get the image?');
-        //     }
-        // }
-
         if ($field) {
             if ($field->type == 'image') {
                 if (isset($value['meta_value'])) {
@@ -249,7 +248,7 @@ trait HasTranslatedRevisions
                 }
             }
         }
-        return collect($value);
+        return $value;
     }
 
 
@@ -273,18 +272,34 @@ trait HasTranslatedRevisions
         $metaValue = $meta->meta_value;
         $value = null;
 
-        switch ($field->type) {
-            case 'repeater':
-                $value = $this->getRepeater($metaValue);
-                break;
-            case 'image':
-                $value = $this->getImages($metaValue ?? []);
-                break;
-            default:
-                $value = $metaValue;
+        $getters = $this->getRevisionOptions()->getters;
+
+        if (array_key_exists($field->type, $getters)) {
+            $callable = [$this,  $this->getRevisionOptions()->getters['image']];
+            $value = $this->handleCallable($callable, $metaValue);
+        } else {
+            $value = $metaValue;
+        }
+        return $value ? $value : null;
+    }
+
+
+    /**
+     * Handle callable
+     *
+     * @param callable $callable
+     * @param array|null $metaValue
+     * @return mixed
+     */
+    public function handleCallable($callable, $metaValue)
+    {
+        if (is_callable($callable)) {
+            return call_user_func_array($callable, [
+                $metaValue ?? []
+            ]);
         }
 
-        return $value ? $value : null;
+        throw new Exception('Method not found');
     }
 
     /**

@@ -3,30 +3,39 @@ namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Infab\TranslatableRevisions\Database\Factories\PageFactory;
 use Infab\TranslatableRevisions\Traits\HasTranslatedRevisions;
 use Illuminate\Support\Str;
+use Infab\TranslatableRevisions\Traits\RevisionOptions;
 
 class Page extends Model
 {
     use HasFactory, HasTranslatedRevisions;
 
-    public function getRevisionSettings()
+    /**
+     * Get the options for the revisions.
+     */
+    public function getRevisionOptions() : RevisionOptions
     {
-        return [
-            'image' => [
-                'model' => Page::class,
-                'transformer' => PageTransformer::class
-            ]
-        ];
+        return RevisionOptions::create()
+            ->registerSpecialTypes(['image'])
+            ->registerGetters([
+                'image' => 'getImages'
+            ]);
     }
 
-    public function getImages(array $ids = [])
+
+    /**
+     * Get images
+     *
+     * @param array $ids
+     * @return Collection
+     */
+    public function getImages(array $ids = []) : Collection
     {
         return collect($ids);
     }
-
-
 
     /**
      * Create a new factory
