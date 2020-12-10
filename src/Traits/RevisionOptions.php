@@ -21,7 +21,7 @@ class RevisionOptions {
 
     /**
      * Default included getters
-     * @var array $getters
+     * @var array $defaultGetters
      */
     public $defaultGetters = ['repeater' => 'getRepeater'];
 
