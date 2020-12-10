@@ -10,8 +10,16 @@ class RevisionOptions {
      */
     public array $specialTypes = [];
 
+    /**
+     * Getters, specify how the fields should
+     * be represented or transformed
+     */
     public array $getters = [];
 
+
+    /**
+     * Default included getters
+     */
     public array $defaultGetters = ['repeater' => 'getRepeater'];
 
     public static function create(): self
@@ -20,6 +28,12 @@ class RevisionOptions {
     }
 
 
+    /**
+     * Register affected types
+     *
+     * @param array $types
+     * @return self
+     */
     public function registerSpecialTypes(array $types): self
     {
         $this->specialTypes = array_merge($types, $this->defaultGetters);
@@ -27,6 +41,12 @@ class RevisionOptions {
         return $this;
     }
 
+    /**
+     * Register new getters
+     *
+     * @param array $getters
+     * @return self
+     */
     public function registerGetters(array $getters): self
     {
         $this->getters = $getters;

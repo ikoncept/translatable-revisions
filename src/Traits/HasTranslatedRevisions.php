@@ -236,18 +236,20 @@ trait HasTranslatedRevisions
         $value = json_decode($value, true);
 
 
-        if ($field) {
-            if ($field->type == 'image') {
-                if (isset($value['meta_value'])) {
-                    $media = $this->getImages($value['meta_value']);
-                    if ($media) {
-                        $value = $media;
-                    } else {
-                        $value = [];
-                    }
-                }
-            }
+
+        if(! $field) {
+            return $value;
         }
+        // if ($field->type == 'image') {
+        //     if (isset($value['meta_value'])) {
+        //         $media = $this->getImages($value['meta_value']);
+        //         if ($media) {
+        //             $value = $media;
+        //         } else {
+        //             $value = [];
+        //         }
+        //     }
+        // }
         return $value;
     }
 
@@ -275,7 +277,7 @@ trait HasTranslatedRevisions
         $getters = $this->getRevisionOptions()->getters;
 
         if (array_key_exists($field->type, $getters)) {
-            $callable = [$this,  $this->getRevisionOptions()->getters['image']];
+            $callable = [$this,  $this->getRevisionOptions()->getters[$field->type]];
             $value = $this->handleCallable($callable, $metaValue);
         } else {
             $value = $metaValue;
@@ -287,19 +289,19 @@ trait HasTranslatedRevisions
     /**
      * Handle callable
      *
-     * @param callable $callable
+     * @param mixed $callable
      * @param array|null $metaValue
      * @return mixed
      */
     public function handleCallable($callable, $metaValue)
     {
-        if (is_callable($callable)) {
+        try {
             return call_user_func_array($callable, [
                 $metaValue ?? []
             ]);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
         }
-
-        throw new Exception('Method not found');
     }
 
     /**
