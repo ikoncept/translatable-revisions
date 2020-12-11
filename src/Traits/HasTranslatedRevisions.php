@@ -296,7 +296,7 @@ trait HasTranslatedRevisions
 
         if (array_key_exists($field->type, $getters)) {
             $callable = [$this,  $this->getRevisionOptions()->getters[$field->type]];
-            $value = $this->handleCallable($callable, $metaValue);
+            $value = $this->handleCallable($callable, $meta);
         } else {
             $value = $metaValue;
         }
@@ -308,14 +308,14 @@ trait HasTranslatedRevisions
      * Handle callable
      *
      * @param mixed $callable
-     * @param array|null $metaValue
+     * @param RevisionMeta|null $meta
      * @return mixed
      */
-    public function handleCallable($callable, $metaValue)
+    public function handleCallable($callable, $meta)
     {
         try {
             return call_user_func_array($callable, [
-                $metaValue ?? []
+                $meta ?? []
             ]);
         } catch (Exception $e) {
             throw new Exception($e->getMessage());

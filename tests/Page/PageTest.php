@@ -328,8 +328,8 @@ class PageTest extends TestCase
         // Assert
         $content = $page->fresh()->getFieldContent(10);
         $this->assertArrayHasKey('what_image', $content);
-        $this->assertContains(71, $content['what_image']);
-        $this->assertContains(80, $content['what_image']);
-        $this->assertContains(90, $content['what_image']);
+        $this->assertContains(71, $content['what_image']['meta_value']);
+        $this->assertContains(80, $content['what_image']['meta_value']);
+        $this->assertContains(90, $content['what_image']['meta_value']);
     }
 }

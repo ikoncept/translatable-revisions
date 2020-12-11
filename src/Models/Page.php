@@ -29,12 +29,12 @@ class Page extends Model
     /**
      * Get images
      *
-     * @param array $ids
+     * @param RevisionMeta|null $meta
      * @return Collection
      */
-    public function getImages(array $ids = []) : Collection
+    public function getImages(RevisionMeta $meta = null) : Collection
     {
-        return collect($ids);
+        return collect($meta);
     }
 
     /**
