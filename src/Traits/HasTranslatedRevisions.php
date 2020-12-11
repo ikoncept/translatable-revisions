@@ -114,6 +114,18 @@ trait HasTranslatedRevisions
 
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) {
             $templateField = RevisionTemplateField::where('key', $fieldKey)->first();
+            if(! $templateField->translated) {
+                $updated = RevisionMeta::updateOrCreate(
+                    ['meta_key' => $fieldKey,
+                    'model_id' => $this->id,
+                    'model_type' => self::class,
+                    'model_version' => $this->revisionNumber],
+                    [
+                        'meta_value' => $data
+                    ]
+                );
+                return $updated;
+            }
             $identifier =  $this->getTable() . '_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
 
 
