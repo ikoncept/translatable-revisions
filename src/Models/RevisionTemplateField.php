@@ -11,6 +11,8 @@ class RevisionTemplateField extends Model {
 
     public $timestamps = false;
 
+    protected $casts = ['options' => 'array'];
+
     public function __construct(array $attributes = [])
     {
         if (! isset($this->table)) {

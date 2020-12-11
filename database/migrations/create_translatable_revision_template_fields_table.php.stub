@@ -25,6 +25,7 @@ class CreateTranslatableRevisionTemplateFieldsTable extends Migration
             $table->string('group')->nullable();
             $table->boolean('repeater')->default(0);
             $table->boolean('translated')->default(1);
+            $table->json('options')->nullable();
             $table->integer('sort_index')->default(0);
         });
     }
