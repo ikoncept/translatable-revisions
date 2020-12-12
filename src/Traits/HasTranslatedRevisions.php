@@ -27,7 +27,7 @@ trait HasTranslatedRevisions
      *
      * @var RevisionOptions
      */
-    protected  $revisionOptions;
+    protected $revisionOptions;
 
 
     /**
@@ -114,7 +114,8 @@ trait HasTranslatedRevisions
 
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) {
             $templateField = RevisionTemplateField::where('key', $fieldKey)->first();
-            if(! $templateField->translated) {
+            // TODO
+            if (! $templateField->translated && ! $templateField->repeater) {
                 $updated = RevisionMeta::updateOrCreate(
                     ['meta_key' => $fieldKey,
                     'model_id' => $this->id,
@@ -255,7 +256,7 @@ trait HasTranslatedRevisions
 
 
 
-        if(! $field) {
+        if (! $field) {
             return $value;
         }
         // if ($field->type == 'image') {
@@ -300,7 +301,7 @@ trait HasTranslatedRevisions
         } else {
             $value = $metaValue;
         }
-        return $value ? $value : null;
+        return $value ? $value : [];
     }
 
 
@@ -325,19 +326,32 @@ trait HasTranslatedRevisions
     /**
      * Get repeater
      *
-     * @param array $data
+     * @param mixed $data
      * @return array
      */
     public function getRepeater($data) : array
     {
-        if (! $data) {
+        if (! $data->meta_value) {
             return [];
         }
-        $repeater = $data;
+        $repeater = $data->meta_value;
 
         foreach ($repeater as &$field) {
             foreach ($field as $key => $termKey) {
-                $field[$key] = $this->translateByKey($termKey);
+                if (! is_array($termKey)) {
+                    // TO DO
+                    if (array_key_exists($key, $this->getRevisionOptions()->getters)) {
+                        $translated = $this->translateByKey($termKey);
+                        $meta = new RevisionMeta();
+                        $meta->meta_value = $translated;
+                        $meta->id = 0;
+                        $callable = [$this,  $this->getRevisionOptions()->getters[$key]];
+                        $value = $this->handleCallable($callable, $meta);
+                        $field[$key] = $value;
+                    } else {
+                        $field[$key] = $this->translateByKey($termKey);
+                    }
+                }
             }
         }
 
