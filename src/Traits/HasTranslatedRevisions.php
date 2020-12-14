@@ -38,11 +38,18 @@ trait HasTranslatedRevisions
     public $locale = '';
 
     /**
+     * Is the model being published
+     *
+     * @var boolean
+     */
+    public $isPublishing = false;
+
+    /**
      * revisionNumber
      *
      * @var int
      */
-    public $revisionNumber = 1;
+    public $revisionNumber;
 
     /**
      * Set the locale, with fallback
@@ -64,15 +71,15 @@ trait HasTranslatedRevisions
     /**
      * Sets the revision, with default fallback
      *
-     * @param integer|null $revisionNumber
+     * @param integer|null $revision
      * @return int
      */
-    public function setRevision($revisionNumber) : int
+    public function setRevision($revision) : int
     {
-        $this->revisionNumber = $this->revision;
-
-        if ($revisionNumber) {
-            $this->revisionNumber = $revisionNumber;
+        if ($revision) {
+            $this->revisionNumber = $revision;
+        } else {
+            $this->revisionNumber = $this->revision;
         }
 
         return (int) $this->revisionNumber;
@@ -179,10 +186,11 @@ trait HasTranslatedRevisions
      * @param string|null $locale
      * @return Collection
      */
-    public function getFieldContent($revision = 1, $locale = null) : Collection
+    public function getFieldContent($revision = null, $locale = null) : Collection
     {
         $this->setLocale($locale);
-        $this->setRevision($this->revision);
+        $this->setRevision($revision);
+
         $content = [];
         foreach ($this->template->fields as $field) {
             $term =  $this->getTable() . '_' . $this->id .'_'. $revision . '_' . $field->key;
@@ -206,9 +214,14 @@ trait HasTranslatedRevisions
     {
         $identifier =  $this->getTable() . '_' . $this->id .'_'. $revision . '_';
 
-        I18nTerm::where('key', 'LIKE', $identifier . '%')
-            ->get()->each(function ($item) {
+        I18nTerm::where('key', 'LIKE', $identifier . '%')->get()
+            ->each(function ($item) {
                 $item->definitions()->delete();
+                $item->delete();
+            });
+        RevisionMeta::where('model_version', '<=', $revision)
+            ->get()
+            ->each(function ($item) {
                 $item->delete();
             });
     }
@@ -367,10 +380,12 @@ trait HasTranslatedRevisions
     public function publish(int $revision)
     {
         // Should publish all languages?
+        // NEW
+        $f = I18nLocale::where('enabled', 1)->count();
+        $this->isPublishing = true;
         $updatedContent = I18nLocale::where('enabled', 1)
             ->get()->mapWithKeys(function ($locale) use ($revision) {
                 $content = $this->getFieldContent($revision, $locale->iso_code);
-
                 $oldRevision = $revision - 1;
                 $this->published_version = $revision;
                 $this->revision = $revision + 1;
