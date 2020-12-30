@@ -220,6 +220,8 @@ trait HasTranslatedRevisions
                 $item->delete();
             });
         RevisionMeta::where('model_version', '<=', $revision)
+            ->where('model_type', self::class)
+            ->where('model_id', $this->id)
             ->get()
             ->each(function ($item) {
                 $item->delete();
