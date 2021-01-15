@@ -191,17 +191,40 @@ trait HasTranslatedRevisions
         $this->setLocale($locale);
         $this->setRevision($revision);
 
-        $content = [];
-        foreach ($this->template->fields as $field) {
-            $term =  $this->getTable() . '_' . $this->id .'_'. $revision . '_' . $field->key;
-            if ($field->translated) {
-                $content[$field->key] = $this->translateField($term, $field);
-            } else {
-                $content[$field->key] = $this->getMeta($term, $field);
-            }
-        }
+        $termWithoutKey =  $this->getTable() . '_' . $this->id .'_'. $revision . '_';
 
-        return collect($content);
+
+        $translatedFields = DB::table('i18n_terms')
+            ->leftJoin('i18n_definitions', 'i18n_terms.id', '=', 'i18n_definitions.term_id')
+            ->leftJoin('revision_template_fields', 'i18n_terms.key', 'LIKE',  DB::raw("'%' || revision_template_fields.key || '%'"))
+            ->select(
+                'i18n_terms.id', 'i18n_terms.key',
+                'i18n_terms.id as term_id',
+                'i18n_definitions.content',
+                'revision_template_fields.key as template_key')
+            ->where('i18n_terms.key', 'LIKE', $termWithoutKey . '%')
+            ->where('i18n_definitions.locale', $this->locale)
+            ->get();
+
+        $metaFields = $this->meta()
+            ->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
+            ->select(
+                'revision_meta.*',
+                'revision_template_fields.type'
+            )
+            ->where('model_version', $revision)
+            ->get();
+
+        $metaData = $metaFields->mapWithKeys(function($metaItem) {
+            return [$metaItem->meta_key => $this->getMeta($metaItem)];
+        });
+
+
+        $grouped = collect($translatedFields)->mapWithKeys(function($item) {
+            return [$item->template_key  => $item->content];
+        });
+
+        return $grouped->merge($metaData);
     }
 
     /**
@@ -274,16 +297,6 @@ trait HasTranslatedRevisions
         if (! $field) {
             return $value;
         }
-        // if ($field->type == 'image') {
-        //     if (isset($value['meta_value'])) {
-        //         $media = $this->getImages($value['meta_value']);
-        //         if ($media) {
-        //             $value = $media;
-        //         } else {
-        //             $value = [];
-        //         }
-        //     }
-        // }
         return $value;
     }
 
@@ -291,32 +304,23 @@ trait HasTranslatedRevisions
     /**
      * Get meta value
      *
-     * @param string $termKey
-     * @param RevisionTemplateField $field
-     * @return array
+     * @param RevisionMeta $meta
+     * @return array|null
      */
-    public function getMeta($termKey, RevisionTemplateField $field)
+    public function getMeta(RevisionMeta $meta)
     {
-        $meta = $this->meta()->where('meta_key', $field->key)
-            ->where('model_version', $this->revisionNumber)
-            ->first();
-
-        if (! $meta) {
-            $meta = new RevisionMeta();
-        }
-
         $metaValue = $meta->meta_value;
         $value = null;
 
         $getters = $this->getRevisionOptions()->getters;
 
-        if (array_key_exists($field->type, $getters)) {
-            $callable = [$this,  $this->getRevisionOptions()->getters[$field->type]];
+        if (array_key_exists($meta->type, $getters)) {
+            $callable = [$this,  $this->getRevisionOptions()->getters[$meta->type]];
             $value = $this->handleCallable($callable, $meta);
         } else {
             $value = $metaValue;
         }
-        return $value ? $value : [];
+        return $value ? $value : null;
     }
 
 
