@@ -221,7 +221,7 @@ trait HasTranslatedRevisions
 
 
         $grouped = collect($translatedFields)->mapWithKeys(function($item) {
-            return [$item->template_key  => $item->content];
+            return [$item->template_key  => json_decode($item->content)];
         });
 
         return $grouped->merge($metaData);
