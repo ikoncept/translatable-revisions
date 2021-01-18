@@ -5,6 +5,7 @@ namespace Infab\TranslatableRevisions\Traits;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -179,6 +180,13 @@ trait HasTranslatedRevisions
         return $definitions;
     }
 
+    protected function getTemplateJoinStatement() : Expression
+    {
+        return (get_class($this->getConnection()) === 'Illuminate\Database\SQLiteConnection')
+            ? DB::raw("'%' || revision_template_fields.key || '%'")
+            : DB::raw("concat( '%',revision_template_fields.key,'%' )");
+    }
+
     /**
      * Get the content for the field
      *
@@ -196,7 +204,7 @@ trait HasTranslatedRevisions
 
         $translatedFields = DB::table('i18n_terms')
             ->leftJoin('i18n_definitions', 'i18n_terms.id', '=', 'i18n_definitions.term_id')
-            ->leftJoin('revision_template_fields', 'i18n_terms.key', 'LIKE',  DB::raw("'%' || revision_template_fields.key || '%'"))
+            ->leftJoin('revision_template_fields', 'i18n_terms.key', 'LIKE',  $this->getTemplateJoinStatement())
             ->select(
                 'i18n_terms.id', 'i18n_terms.key',
                 'i18n_terms.id as term_id',
