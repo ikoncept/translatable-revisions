@@ -18,6 +18,7 @@ use Infab\TranslatableRevisions\Models\I18nTerm;
 use Infab\TranslatableRevisions\Models\RevisionMeta;
 use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Infab\TranslatableRevisions\Models\RevisionTemplateField;
+use Illuminate\Support\Str;
 
 trait HasTranslatedRevisions
 {
@@ -121,7 +122,13 @@ trait HasTranslatedRevisions
         $this->setRevision($revision);
 
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) {
+            $identifier =  $this->getTable() . '_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
+
+            // Remove stale terms
+            DB::table('i18n_terms')->where('key', 'LIKE', $identifier . '%')->delete();
+
             $templateField = RevisionTemplateField::where('key', $fieldKey)->first();
+
             // TODO
             if (! $templateField->translated && ! $templateField->repeater) {
                 $updated = RevisionMeta::updateOrCreate(
@@ -135,7 +142,6 @@ trait HasTranslatedRevisions
                 );
                 return $updated;
             }
-            $identifier =  $this->getTable() . '_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
 
 
             if (is_array($data) && ! Arr::isAssoc($data)) {
@@ -361,28 +367,48 @@ trait HasTranslatedRevisions
         if (! $data->meta_value) {
             return [];
         }
+
         $repeater = $data->meta_value;
 
-        foreach ($repeater as &$field) {
-            foreach ($field as $key => $termKey) {
-                if (! is_array($termKey)) {
-                    // TO DO
-                    if (array_key_exists($key, $this->getRevisionOptions()->getters)) {
-                        $translated = $this->translateByKey($termKey);
-                        $meta = new RevisionMeta();
-                        $meta->meta_value = $translated;
-                        $meta->id = 0;
-                        $callable = [$this,  $this->getRevisionOptions()->getters[$key]];
-                        $value = $this->handleCallable($callable, $meta);
-                        $field[$key] = $value;
-                    } else {
-                        $field[$key] = $this->translateByKey($termKey);
-                    }
+        return collect($repeater)->map(function($repeaterItem) {
+            return collect($repeaterItem)->map(function($termKey) {
+                // Translate via the termkey
+                return $this->translateByKey($termKey);
+            })->map(function($translatedItem, $key) {
+                // If the key contains children, handle children
+                if(Str::contains($key, 'children')) {
+                    return $this->handleChildRepeater($translatedItem);
                 }
-            }
-        }
+                // If there is an image to take care of
+                if(Str::contains($key, 'image')) {
+                    return $this->handleCallable(
+                        [$this,  $this->getRevisionOptions()->getters['image']],
+                        RevisionMeta::make([
+                            'meta_value' => $translatedItem
+                        ])
+                    );
+                }
+                // Otherwise return the translated item as is
+                return $translatedItem;
+            });
+        })->toArray();
+    }
 
-        return $repeater;
+    public function handleChildRepeater(array $translatedItem) : Collection
+    {
+        return collect($translatedItem)->transform(function($child) {
+            return collect($child)->map(function($item, $key) {
+                if(Str::contains($key, 'image')) {
+                    return $this->handleCallable(
+                        [$this,  $this->getRevisionOptions()->getters['image']],
+                        RevisionMeta::make([
+                            'meta_value' => $item
+                        ])
+                    );
+                }
+                return $item;
+            });
+        });
     }
 
     /**
