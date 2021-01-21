@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Infab\TranslatableRevisions\Events\DefinitionsPublished;
 use Infab\TranslatableRevisions\Events\DefinitionsUpdated;
+use Infab\TranslatableRevisions\Models\I18nTerm;
 use Prophecy\Prophecy\Revealer;
 
 class PageTest extends TestCase
@@ -289,7 +290,17 @@ class PageTest extends TestCase
         $fields = $page->updateContent([
             'page_title' => 'The page title for the page',
             'boxes' => [
-                ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
+                [
+                    'title' => 'Box 1 title!',
+                    'url' => 'https://google.com',
+                    'image' => [1],
+                    'children' => [
+                        [
+                            'title' => 'Sweet child',
+                            'pop_image' => [2]
+                        ]
+                    ]
+                ],
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
             ]
@@ -331,5 +342,65 @@ class PageTest extends TestCase
         $this->assertContains(71, $content['what_image']['meta_value']);
         $this->assertContains(80, $content['what_image']['meta_value']);
         $this->assertContains(90, $content['what_image']['meta_value']);
+    }
+
+    /** @test **/
+    public function it_can_delete_a_page()
+    {
+        // Arrange
+        $template = RevisionTemplate::factory()->create();
+        $titleField = RevisionTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'name' => 'Page title',
+            'translated' => true,
+            'key' => 'page_title'
+        ]);
+        $boxField = RevisionTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'translated' => false,
+            'key' => 'boxes',
+            'name' => 'Boxes',
+            'repeater' => true,
+            'type' => 'repeater'
+        ]);
+        $imageField = RevisionTemplateField::factory()->create([
+            'template_id' => $template->id,
+            'type' => 'image',
+            'name' => 'image',
+            'translated' => false,
+            'key' => 'what_image'
+        ]);
+        $page = Page::factory()->create([
+            'template_id' => $template->id,
+            'revision' => 10
+        ]);
+        $fields = $page->updateContent([
+            'page_title' => 'The page title for the page',
+            'what_image' => [71],
+            'boxes' => [
+                ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
+                ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
+                ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
+            ]
+        ]);
+
+        // Act
+        $page->delete();
+
+        // Assert
+        $this->assertDatabaseMissing('pages', [
+            'id' => $page->id
+        ]);
+
+        $this->assertDatabaseMissing('i18n_terms', [
+            'key' => 'pages_' . $page->id . '_' . '10_page_title'
+        ]);
+        $this->assertDatabaseMissing('i18n_definitions', [
+            'content' => 'The page title for the page'
+        ]);
+        $this->assertDatabaseMissing('revision_meta', [
+            'model_id' => $page->id,
+            'model_type' => 'Infab\TranslatableRevisions\Models\Page'
+        ]);
     }
 }

@@ -87,6 +87,17 @@ trait HasTranslatedRevisions
         return (int) $this->revisionNumber;
     }
 
+    protected static function bootHasTranslatedRevisions() : void
+    {
+        static::deleting(function ($model) {
+            $termKey = $model->getTable() . '_' . $model->id . '_';
+            // Clear meta
+            $model->meta()->delete();
+            // Clear terms/defs
+            DB::table('i18n_terms')->where('key', 'LIKE', $termKey . '%')->delete();
+        });
+    }
+
     /**
      * Relation for revisiontemplates
      *
@@ -145,11 +156,11 @@ trait HasTranslatedRevisions
 
 
             if (is_array($data) && ! Arr::isAssoc($data)) {
-                if ($templateField->type == 'image') {
-                    $multiData = $data;
-                } else {
-                    $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
-                }
+                // if ($templateField->type == 'image') {
+                //     $multiData = $data;
+                // } else {
+                $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
+                // }
 
 
                 $updated = RevisionMeta::updateOrCreate(
@@ -256,34 +267,13 @@ trait HasTranslatedRevisions
                 $item->definitions()->delete();
                 $item->delete();
             });
-        RevisionMeta::where('model_version', '<=', $revision)
+        DB::table(config('translatable-revisions.revision_meta_table_name'))
+            ->where('model_version', '<=', $revision)
             ->where('model_type', self::class)
             ->where('model_id', $this->id)
-            ->get()
-            ->each(function ($item) {
-                $item->delete();
-            });
+            ->delete();
     }
 
-
-    /**
-     * Translate a field
-     *
-     * @param string $termKey
-     * @param RevisionTemplateField $field
-     * @param bool $full
-     * @return mixed
-     */
-    public function translateField(string $termKey, RevisionTemplateField $field, $full = false)
-    {
-        if (!$full) {
-            $translated = $this->translateByKey($termKey, $field);
-
-            return $translated == $termKey ? '' : $translated;
-        }
-
-        return '';
-    }
 
     /**
      * Translate by term key
@@ -364,10 +354,6 @@ trait HasTranslatedRevisions
      */
     public function getRepeater($data) : array
     {
-        if (! $data->meta_value) {
-            return [];
-        }
-
         $repeater = $data->meta_value;
 
         return collect($repeater)->map(function($repeaterItem) {

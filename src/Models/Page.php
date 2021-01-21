@@ -21,10 +21,10 @@ class Page extends Model
         return RevisionOptions::create()
             ->registerSpecialTypes(['image'])
             ->registerGetters([
-                'image' => 'getImages'
+                'image' => 'getImages',
+                'repeater' => 'getRepeater'
             ]);
     }
-
 
     /**
      * Get images
