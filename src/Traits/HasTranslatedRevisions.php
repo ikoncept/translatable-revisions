@@ -380,8 +380,17 @@ trait HasTranslatedRevisions
         })->toArray();
     }
 
-    public function handleChildRepeater(array $translatedItem) : Collection
+    /**
+     * Handle child repeater
+     *
+     * @param array|null $translatedItem
+     * @return Collection
+     */
+    public function handleChildRepeater($translatedItem) : Collection
     {
+        if( ! $translatedItem) {
+            return collect([]);
+        }
         return collect($translatedItem)->transform(function($child) {
             return collect($child)->map(function($item, $key) {
                 if(Str::contains($key, 'image')) {
