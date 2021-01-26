@@ -20,6 +20,16 @@ class RevisionOptions {
 
 
     /**
+     * Default template for a model which refers
+     * to the slug field on the revision_templates table
+     *
+     *
+     * @var string
+     */
+    public $defaultTemplate = '';
+
+
+    /**
      * Default included getters
      * @var array $defaultGetters
      */
@@ -53,6 +63,19 @@ class RevisionOptions {
     public function registerGetters(array $getters): self
     {
         $this->getters = $getters;
+
+        return $this;
+    }
+
+    /**
+     * Register a default template
+     *
+     * @param string $slug
+     * @return self
+     */
+    public function registerDefaultTemplate(string $slug) : self
+    {
+        $this->defaultTemplate = $slug;
 
         return $this;
     }

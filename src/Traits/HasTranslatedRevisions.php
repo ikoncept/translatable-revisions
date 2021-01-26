@@ -135,13 +135,22 @@ trait HasTranslatedRevisions
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) {
             $identifier =  $this->getTable() . '_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
 
-            // Remove stale terms
-            DB::table('i18n_terms')->where('key', 'LIKE', $identifier . '%')->delete();
 
-            $templateField = RevisionTemplateField::where('key', $fieldKey)->first();
+            // Should check if the template field is connected to the chosen template
+            $defTemplateSlug = $this->getRevisionOptions()->defaultTemplate;
+            $templateField = RevisionTemplateField::where('key', $fieldKey)
+                ->whereHas('template', function($query) use ($defTemplateSlug) {
+                    if($defTemplateSlug) {
+                        $query->where('slug', $defTemplateSlug);
+                    }
+                })
+                ->first();
+
 
             // TODO
             if (! $templateField->translated && ! $templateField->repeater) {
+                // Remove stale terms
+                DB::table('i18n_terms')->where('key', 'LIKE', $identifier . '%')->delete();
                 $updated = RevisionMeta::updateOrCreate(
                     ['meta_key' => $fieldKey,
                     'model_id' => $this->id,
