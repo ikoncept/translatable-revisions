@@ -157,19 +157,16 @@ trait HasTranslatedRevisions
                     'model_type' => self::class,
                     'model_version' => $this->revisionNumber],
                     [
-                        'meta_value' => $data
+                        'meta_value' => $this->fromArrayToIdArray($data)
                     ]
                 );
                 return $updated;
             }
 
 
-            if (is_array($data) && ! Arr::isAssoc($data)) {
-                // if ($templateField->type == 'image') {
-                //     $multiData = $data;
-                // } else {
+            if (is_array($data) && ! Arr::isAssoc($data) && ! $templateField->translated) {
+
                 $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
-                // }
 
 
                 $updated = RevisionMeta::updateOrCreate(
@@ -194,7 +191,7 @@ trait HasTranslatedRevisions
                         'term_id' => $term->id,
                         'locale' => $this->locale
                     ],
-                    ['content' => $data]
+                    ['content' => $this->transformData($data, $templateField)]
                 );
 
                 return ['definition' => $definition, 'term' => $term];
@@ -204,6 +201,33 @@ trait HasTranslatedRevisions
         app()->events->dispatch(new DefinitionsUpdated($definitions, $this));
 
         return $definitions;
+    }
+
+    protected function fromArrayToIdArray($data)
+    {
+        return (is_array($data) && Arr::isAssoc($data)) ? [$data['id']] : $data;
+    }
+
+    protected function transformData($data, $templateField)
+    {
+        // Clean this up, atm hardcoded to images and children
+        if($templateField->repeater) {
+            return collect($data)->map(function($repeater) {
+                if(array_key_exists('image', $repeater))  {
+                   $repeater['image'] = $this->fromArrayToIdArray($repeater['image']);
+                }
+                if(array_key_exists('children', $repeater))  {
+                    $repeater['children'] = collect($repeater['children'])->transform(function($child) {
+                        if(array_key_exists('image', $child))  {
+                            $child['image'] = $this->fromArrayToIdArray($child['image']);
+                        }
+                        return $child;
+                    });
+                }
+                return $repeater;
+            });
+        }
+        return $data;
     }
 
     protected function getTemplateJoinStatement() : Expression
@@ -235,6 +259,8 @@ trait HasTranslatedRevisions
                 'i18n_terms.id', 'i18n_terms.key',
                 'i18n_terms.id as term_id',
                 'i18n_definitions.content',
+                'revision_template_fields.repeater',
+                'revision_template_fields.translated',
                 'revision_template_fields.key as template_key')
             ->where('i18n_terms.key', 'LIKE', $termWithoutKey . '%')
             ->where('i18n_definitions.locale', $this->locale)
@@ -253,8 +279,15 @@ trait HasTranslatedRevisions
             return [$metaItem->meta_key => $this->getMeta($metaItem)];
         });
 
+        // $repeaterTypes =
 
-        $grouped = collect($translatedFields)->mapWithKeys(function($item) {
+
+        $grouped = collect($translatedFields)->mapWithKeys(function($item, $key) {
+            if($item->repeater) {
+                $content = json_decode($item->content, true);
+
+                return [$item->template_key  => $this->getRepeater($content)];
+            }
             return [$item->template_key  => json_decode($item->content)];
         });
 
@@ -361,7 +394,7 @@ trait HasTranslatedRevisions
      * @param mixed $data
      * @return array
      */
-    public function getRepeater($data) : array
+    public function getRepeaterLegacy($data) : array
     {
         $repeater = $data->meta_value;
 
@@ -383,11 +416,41 @@ trait HasTranslatedRevisions
                         ])
                     );
                 }
+                // $this->transformIfImage($key, $translatedItem);
                 // Otherwise return the translated item as is
                 return $translatedItem;
             });
         })->toArray();
     }
+
+    /**
+     * Get repeater
+     *
+     * @param mixed $data
+     * @return array
+     */
+    public function getRepeater($data) : array
+    {
+        $repeater = $data;
+
+        return collect($repeater)->map(function($child) {
+            return collect($child)->map(function($value, $key) {
+                if(Str::contains($key, 'image')) {
+                    return $this->handleCallable(
+                        [$this,  $this->getRevisionOptions()->getters['image']],
+                        RevisionMeta::make([
+                            'meta_value' => $value
+                        ])
+                    );
+                }
+                if(Str::contains($key, 'children')) {
+                    return $this->handleChildRepeater($value);
+                }
+                return $value;
+            });
+        })->toArray();
+    }
+
 
     /**
      * Handle child repeater

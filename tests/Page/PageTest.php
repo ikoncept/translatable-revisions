@@ -147,42 +147,28 @@ class PageTest extends TestCase
             'key' => 'pages_' . $page->id .'_'. $page->revision . '_page_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__0_url',
-        ]);
-        $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__1_url',
-        ]);
-        $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__2_url',
-        ]);
-
-        $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_page_title',
-        ]);
-        $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__0_title',
-        ]);
-        $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__1_title',
-        ]);
-        $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes__2_title',
+            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes',
         ]);
 
 
 
         $this->assertDatabaseHas('i18n_definitions', [
             'locale' => 'en',
-            'content' => json_encode('https://google.com'),
+            'content' => json_encode([
+                ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
+                ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
+                ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
+            ]),
+
         ]);
-        $this->assertDatabaseHas('i18n_definitions', [
-            'locale' => 'en',
-            'content' => json_encode('https://bog.com'),
-        ]);
-        $this->assertDatabaseHas('i18n_definitions', [
-            'locale' => 'en',
-            'content' => json_encode('http://flank.se'),
-        ]);
+        // $this->assertDatabaseHas('i18n_definitions', [
+        //     'locale' => 'en',
+        //     'content' => json_encode('https://bog.com'),
+        // ]);
+        // $this->assertDatabaseHas('i18n_definitions', [
+        //     'locale' => 'en',
+        //     'content' => json_encode('http://flank.se'),
+        // ]);
     }
 
     /** @test **/
@@ -274,7 +260,7 @@ class PageTest extends TestCase
         ]);
         $boxField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
-            'translated' => false,
+            'translated' => true,
             'key' => 'boxes',
             'name' => 'Boxes',
             'repeater' => true,
