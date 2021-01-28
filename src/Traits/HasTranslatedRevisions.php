@@ -203,12 +203,25 @@ trait HasTranslatedRevisions
         return $definitions;
     }
 
+    /**
+     * Transform array to an array with id only
+     *
+     * @param mixed $data
+     * @return mixed
+     */
     protected function fromArrayToIdArray($data)
     {
         return (is_array($data) && Arr::isAssoc($data)) ? [$data['id']] : $data;
     }
 
-    protected function transformData($data, $templateField)
+    /**
+     * Transform images and children
+     *
+     * @param mixed $data
+     * @param RevisionTemplateField $templateField
+     * @return mixed
+     */
+    protected function transformData($data, RevisionTemplateField $templateField)
     {
         // Clean this up, atm hardcoded to images and children
         if($templateField->repeater) {
