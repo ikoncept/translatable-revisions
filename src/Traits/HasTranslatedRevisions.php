@@ -10,6 +10,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Infab\TranslatableRevisions\Events\DefinitionsPublished;
 use Infab\TranslatableRevisions\Events\DefinitionsUpdated;
 use Infab\TranslatableRevisions\Models\I18nDefinition;
@@ -37,7 +38,7 @@ trait HasTranslatedRevisions
      *
      * @var string
      */
-    public $locale = '';
+    protected $locale = '';
 
     /**
      * Is the model being published
@@ -67,6 +68,11 @@ trait HasTranslatedRevisions
             $this->locale = App::getLocale();
         }
 
+        return $this->locale;
+    }
+
+    public function getLocale() : string
+    {
         return $this->locale;
     }
 
@@ -129,10 +135,13 @@ trait HasTranslatedRevisions
     public function updateContent(array $fieldData, $locale = null, $revision = null) : Collection
     {
         // Revision is always the current, if not overridden
-        $this->setLocale($locale);
+        if(! $locale) {
+            $this->setLocale($locale);
+            $locale = $this->locale;
+        }
         $this->setRevision($revision);
 
-        $definitions = collect($fieldData)->map(function ($data, $fieldKey) {
+        $definitions = collect($fieldData)->map(function ($data, $fieldKey) use ($locale) {
             $identifier =  $this->getTable() . '_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
 
 
@@ -189,7 +198,7 @@ trait HasTranslatedRevisions
                 $definition = I18nDefinition::updateOrCreate(
                     [
                         'term_id' => $term->id,
-                        'locale' => $this->locale
+                        'locale' => $locale
                     ],
                     ['content' => $this->transformData($data, $templateField)]
                 );

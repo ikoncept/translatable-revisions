@@ -12,7 +12,9 @@ parameters:
     ignoreErrors:
         - '#Access to an undefined property#'
         - '#Unsafe usage of new static#'
+
     excludePaths:
         - ./*/*/FileToBeExcluded.php
-        -  ./app/Http/Controllers/Api/RolesController.php
+        - ./app/Http/Controllers/Api/RolesController.php
+
     checkMissingIterableValueType: false
