@@ -343,10 +343,9 @@ trait HasTranslatedRevisions
      * Translate by term key
      *
      * @param string $termKey
-     * @param RevisionTemplateField|null $field
      * @return mixed
      */
-    public function translateByKey(string $termKey, ?RevisionTemplateField $field = null)
+    public function translateByKey(string $termKey, string $locale)
     {
         if (!$termKey) {
             return '';
@@ -356,15 +355,10 @@ trait HasTranslatedRevisions
             ->leftJoin('i18n_definitions', 'term_id', '=', 'i18n_terms.id')
             ->where([
                 ['key', '=', $termKey],
-                ['locale', '=', $this->locale]
+                ['i18n_definitions.locale', '=', $locale]
             ])->value('content');
         $value = json_decode($value, true);
 
-
-
-        if (! $field) {
-            return $value;
-        }
         return $value;
     }
 
@@ -423,7 +417,7 @@ trait HasTranslatedRevisions
         return collect($repeater)->map(function($repeaterItem) {
             return collect($repeaterItem)->map(function($termKey) {
                 // Translate via the termkey
-                return $this->translateByKey($termKey);
+                return $this->translateByKey($termKey, $this->locale);
             })->map(function($translatedItem, $key) {
                 // If the key contains children, handle children
                 if(Str::contains($key, 'children')) {
