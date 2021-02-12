@@ -147,13 +147,17 @@ trait HasTranslatedRevisions
 
             // Should check if the template field is connected to the chosen template
             $defTemplateSlug = $this->getRevisionOptions()->defaultTemplate;
-            $templateField = RevisionTemplateField::where('key', $fieldKey)
-                ->whereHas('template', function($query) use ($defTemplateSlug) {
-                    if($defTemplateSlug) {
-                        $query->where('slug', $defTemplateSlug);
-                    }
-                })
-                ->first();
+            try {
+                $templateField = RevisionTemplateField::where('key', $fieldKey)
+                    ->whereHas('template', function($query) use ($defTemplateSlug) {
+                        if($defTemplateSlug) {
+                            $query->where('slug', $defTemplateSlug);
+                        }
+                    })
+                    ->firstOrFail();
+            } catch (\Exception $e) {
+                abort(500, 'Field key not found for: ' . $fieldKey);
+            }
 
 
             // TODO
