@@ -455,9 +455,11 @@ trait HasTranslatedRevisions
 
         return collect($repeater)->map(function($child) {
             return collect($child)->map(function($value, $key) {
-                if(Str::contains($key, 'image')) {
+
+                // Check if key existsss in the revision options
+                if(array_key_exists($key, $this->getRevisionOptions()->getters))  {
                     return $this->handleCallable(
-                        [$this,  $this->getRevisionOptions()->getters['image']],
+                        [$this,  $this->getRevisionOptions()->getters[$key]],
                         RevisionMeta::make([
                             'meta_value' => $value
                         ])
@@ -485,9 +487,9 @@ trait HasTranslatedRevisions
         }
         return collect($translatedItem)->transform(function($child) {
             return collect($child)->map(function($item, $key) {
-                if(Str::contains($key, 'image')) {
+                if(array_key_exists($key, $this->getRevisionOptions()->getters))  {
                     return $this->handleCallable(
-                        [$this,  $this->getRevisionOptions()->getters['image']],
+                        [$this,  $this->getRevisionOptions()->getters[$key]],
                         RevisionMeta::make([
                             'meta_value' => $item
                         ])
