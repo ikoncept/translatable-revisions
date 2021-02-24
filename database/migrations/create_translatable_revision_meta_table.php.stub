@@ -15,7 +15,7 @@ class CreateTranslatableRevisionMetaTable extends Migration
             $table->nullableMorphs('model', 'model');
             // $table->unsignedBigInteger('model_id');
             // $table->foreign('model_id')->references('id')->on(config('translatable-revisions.revisions_table_name'))->onDelete('cascade');
-            $table->integer('model_version');
+            $table->integer('model_version')->nullable();
             $table->string('meta_key');
             $table->text('meta_value');
             $table->nullableTimestamps();
