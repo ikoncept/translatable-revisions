@@ -310,7 +310,7 @@ class PageTest extends TestCase
             'type' => 'image',
             'name' => 'image',
             'translated' => false,
-            'key' => 'what_image'
+            'key' => 'image'
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
@@ -319,15 +319,15 @@ class PageTest extends TestCase
 
         // Act
         $fields = $page->updateContent([
-            'what_image' => [71, 80, 90]
+            'image' => [71, 80, 90]
         ]);
 
         // Assert
         $content = $page->fresh()->getFieldContent(10);
-        $this->assertArrayHasKey('what_image', $content);
-        $this->assertContains(71, $content['what_image']['meta_value']);
-        $this->assertContains(80, $content['what_image']['meta_value']);
-        $this->assertContains(90, $content['what_image']['meta_value']);
+        $this->assertArrayHasKey('image', $content);
+        $this->assertContains(71, $content['image']['meta_value']);
+        $this->assertContains(80, $content['image']['meta_value']);
+        $this->assertContains(90, $content['image']['meta_value']);
     }
 
     /** @test **/

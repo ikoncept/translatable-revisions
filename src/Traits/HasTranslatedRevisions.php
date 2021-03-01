@@ -378,10 +378,8 @@ trait HasTranslatedRevisions
         $metaValue = $meta->meta_value;
         $value = null;
 
-        $getters = $this->getRevisionOptions()->getters;
-
-        if (array_key_exists($meta->type, $getters)) {
-            $callable = [$this,  $this->getRevisionOptions()->getters[$meta->type]];
+        if (array_key_exists($meta->meta_key, $this->getRevisionOptions()->getters)) {
+            $callable = [$this,  $this->getRevisionOptions()->getters[$meta->meta_key]];
             $value = $this->handleCallable($callable, $meta);
         } else {
             $value = $metaValue;
