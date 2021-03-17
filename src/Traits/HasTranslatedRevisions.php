@@ -164,7 +164,7 @@ trait HasTranslatedRevisions
             if (! $templateField->translated && ! $templateField->repeater) {
                 DB::table('i18n_terms')->where('key', 'LIKE', $identifier . '%')->delete();
 
-                return $this->updateMetaContent($fieldKey, $data);
+                return $this->updateMetaItem($fieldKey, $data);
             }
 
 
@@ -379,13 +379,13 @@ trait HasTranslatedRevisions
     }
 
     /**
-     * Undocumented function
+     * Update a specific meta item
      *
      * @param string $fieldKey
      * @param mixed $data
      * @return RevisionMeta
      */
-    public function updateMetaContent(string $fieldKey, $data) : RevisionMeta
+    public function updateMetaItem(string $fieldKey, $data) : RevisionMeta
     {
         $updated = RevisionMeta::updateOrCreate(
             ['meta_key' => $fieldKey,
@@ -397,6 +397,22 @@ trait HasTranslatedRevisions
             ]
         );
         return $updated;
+    }
+
+    /**
+     * Update a meta items with an array of data
+     *
+     * @param array $data
+     * @return array
+     */
+    public function updateMetaContent(array $data) : array
+    {
+        $updatedItems = [];
+        foreach($data as $key => $content) {
+            $updatedItems[] = $this->updateMetaItem($key, $content);
+        }
+
+        return $updatedItems;
     }
 
 
