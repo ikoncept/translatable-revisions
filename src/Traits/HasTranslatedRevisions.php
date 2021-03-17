@@ -162,18 +162,9 @@ trait HasTranslatedRevisions
 
             // TODO
             if (! $templateField->translated && ! $templateField->repeater) {
-                // Remove stale terms
                 DB::table('i18n_terms')->where('key', 'LIKE', $identifier . '%')->delete();
-                $updated = RevisionMeta::updateOrCreate(
-                    ['meta_key' => $fieldKey,
-                    'model_id' => $this->id,
-                    'model_type' => self::class,
-                    'model_version' => $this->revisionNumber],
-                    [
-                        'meta_value' => $this->fromArrayToIdArray($data)
-                    ]
-                );
-                return $updated;
+
+                return $this->updateMetaContent($fieldKey, $data);
             }
 
 
@@ -385,6 +376,27 @@ trait HasTranslatedRevisions
             $value = $metaValue;
         }
         return $value ? $value : null;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param string $fieldKey
+     * @param mixed $data
+     * @return RevisionMeta
+     */
+    public function updateMetaContent(string $fieldKey, $data) : RevisionMeta
+    {
+        $updated = RevisionMeta::updateOrCreate(
+            ['meta_key' => $fieldKey,
+            'model_id' => $this->id,
+            'model_type' => self::class,
+            'model_version' => $this->revisionNumber],
+            [
+                'meta_value' => $this->fromArrayToIdArray($data)
+            ]
+        );
+        return $updated;
     }
 
 
