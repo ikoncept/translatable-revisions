@@ -381,11 +381,11 @@ trait HasTranslatedRevisions
     /**
      * Update a specific meta item
      *
-     * @param string $fieldKey
+     * @param string|int $fieldKey
      * @param mixed $data
      * @return RevisionMeta
      */
-    public function updateMetaItem(string $fieldKey, $data) : RevisionMeta
+    public function updateMetaItem($fieldKey, $data) : RevisionMeta
     {
         $updated = RevisionMeta::updateOrCreate(
             ['meta_key' => $fieldKey,
