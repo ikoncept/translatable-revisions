@@ -193,7 +193,7 @@ trait HasTranslatedRevisions
                 $definition = I18nDefinition::updateOrCreate(
                     [
                         'term_id' => $term->id,
-                        'locale' => $locale
+                        'locale' => $locale,
                     ],
                     ['content' => $this->transformData($data, $templateField)]
                 );
@@ -244,6 +244,12 @@ trait HasTranslatedRevisions
                 return $repeater;
             });
         }
+
+        // Transform whole objects to their ids
+        if($templateField->type === 'image' || $templateField->type === 'file' || $templateField->type === 'video') {
+            $data = $this->fromArrayToIdArray($data);
+            return $data;
+        }
         return $data;
     }
 
@@ -277,6 +283,7 @@ trait HasTranslatedRevisions
                 'i18n_terms.id as term_id',
                 'i18n_definitions.content',
                 'revision_template_fields.repeater',
+                'revision_template_fields.type',
                 'revision_template_fields.translated',
                 'revision_template_fields.key as template_key')
             ->where('i18n_terms.key', 'LIKE', $termWithoutKey . '%')
@@ -298,13 +305,26 @@ trait HasTranslatedRevisions
 
         // $repeaterTypes =
 
-
         $grouped = collect($translatedFields)->mapWithKeys(function($item, $key) {
             if($item->repeater) {
                 $content = json_decode($item->content, true);
 
                 return [$item->template_key  => $this->getRepeater($content)];
             }
+
+            if(in_array($item->type, $this->getRevisionOptions()->specialTypes)) {
+                if(array_key_exists($item->type, $this->getRevisionOptions()->getters))  {
+                    return [
+                        $item->template_key  => $this->handleCallable(
+                            [$this,  $this->getRevisionOptions()->getters[$item->type]],
+                            RevisionMeta::make([
+                                'meta_value' => json_decode($item->content)
+                            ])
+                        )
+                    ];
+                }
+            }
+
             return [$item->template_key  => json_decode($item->content)];
         });
 
