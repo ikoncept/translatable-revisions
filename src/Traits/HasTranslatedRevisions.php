@@ -233,6 +233,12 @@ trait HasTranslatedRevisions
                 if(array_key_exists('image', $repeater))  {
                    $repeater['image'] = $this->fromArrayToIdArray($repeater['image']);
                 }
+                if(array_key_exists('video', $repeater))  {
+                   $repeater['video'] = $this->fromArrayToIdArray($repeater['video']);
+                }
+                if(array_key_exists('file', $repeater))  {
+                   $repeater['file'] = $this->fromArrayToIdArray($repeater['file']);
+                }
                 if(array_key_exists('children', $repeater))  {
                     $repeater['children'] = collect($repeater['children'])->transform(function($child) {
                         if(array_key_exists('image', $child))  {
