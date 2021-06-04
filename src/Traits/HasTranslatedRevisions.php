@@ -218,13 +218,16 @@ trait HasTranslatedRevisions
         if(empty($data)) {
             return null;
         }
-        if(is_numeric($data[0]) || ! array_key_exists('id', $data[0])) {
-            return $data;
-        }
         if(is_array($data) && Arr::isAssoc($data)) {
            return [$data['id']];
         }
         if(is_array($data) && ! Arr::isAssoc($data)) {
+            if(is_numeric($data[0])) {
+                return $data;
+            }
+            if(! array_key_exists('id', $data[0])) {
+                return $data;
+            }
             return collect($data)->pluck('id')->toArray();
         }
         return $data;
