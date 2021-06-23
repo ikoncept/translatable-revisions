@@ -254,6 +254,9 @@ trait HasTranslatedRevisions
                 if(array_key_exists('file', $repeater))  {
                    $repeater['file'] = $this->fromArrayToIdArray($repeater['file']);
                 }
+                if(array_key_exists('smartBlock', $repeater))  {
+                    $repeater['smartBlock'] = $this->fromArrayToIdArray($repeater['smartBlock']);
+                 }
                 if(array_key_exists('children', $repeater))  {
                     $repeater['children'] = collect($repeater['children'])->transform(function($child) {
                         if(array_key_exists('image', $child))  {
