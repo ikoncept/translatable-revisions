@@ -243,38 +243,40 @@ trait HasTranslatedRevisions
     protected function transformData($data, RevisionTemplateField $templateField)
     {
         // Clean this up, atm hardcoded to images and children
-        if($templateField->repeater) {
-            return collect($data)->map(function($repeater) {
-                if(array_key_exists('image', $repeater))  {
-                   $repeater['image'] = $this->fromArrayToIdArray($repeater['image']);
-                }
-                if(array_key_exists('video', $repeater))  {
-                   $repeater['video'] = $this->fromArrayToIdArray($repeater['video']);
-                }
-                if(array_key_exists('file', $repeater))  {
-                   $repeater['file'] = $this->fromArrayToIdArray($repeater['file']);
-                }
-                if(array_key_exists('smartBlock', $repeater))  {
-                    $repeater['smartBlock'] = $this->fromArrayToIdArray($repeater['smartBlock']);
-                 }
-                if(array_key_exists('children', $repeater))  {
-                    $repeater['children'] = collect($repeater['children'])->transform(function($child) {
-                        if(array_key_exists('image', $child))  {
-                            $child['image'] = $this->fromArrayToIdArray($child['image']);
-                        }
-                        return $child;
+        if ($templateField->repeater) {
+            return collect($data)->map(function ($repeater) {
+                if (array_key_exists('children', $repeater)) {
+                    $repeater['children'] = collect($repeater['children'])->transform(function ($child) {
+                        return $this->handleSpecialTypes($child);
                     });
                 }
+                $repeater = $this->handleSpecialTypes($repeater);
+
                 return $repeater;
             });
         }
 
         // Transform whole objects to their ids
-        if($templateField->type === 'image' || $templateField->type === 'file' || $templateField->type === 'video') {
+        if (in_array($templateField->type, $this->getRevisionOptions()->specialTypes)) {
             $data = $this->fromArrayToIdArray($data);
-            return $data;
         }
+
         return $data;
+    }
+
+    protected function handleSpecialTypes(array $repeater)
+    {
+        return collect($repeater)->filter(function($item, $key) use ($repeater) {
+            if(empty($repeater[$key])) {
+                return false;
+            }
+            return true;
+        })->map(function ($value, $key) {
+            if (in_array($key, $this->getRevisionOptions()->specialTypes)) {
+                return $this->fromArrayToIdArray($value);
+            }
+            return $value;
+        });
     }
 
     protected function getTemplateJoinStatement() : Expression

@@ -49,7 +49,7 @@ class RevisionOptions {
      */
     public function registerSpecialTypes(array $types): self
     {
-        $this->specialTypes = array_merge($types, $this->defaultGetters);
+        $this->specialTypes = $types;
 
         return $this;
     }
