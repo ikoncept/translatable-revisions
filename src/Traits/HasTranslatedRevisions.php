@@ -264,7 +264,7 @@ trait HasTranslatedRevisions
         return $data;
     }
 
-    protected function handleSpecialTypes(array $repeater)
+    protected function handleSpecialTypes(array $repeater) : array
     {
         return collect($repeater)->filter(function($item, $key) use ($repeater) {
             if(empty($repeater[$key])) {
@@ -276,7 +276,7 @@ trait HasTranslatedRevisions
                 return $this->fromArrayToIdArray($value);
             }
             return $value;
-        });
+        })->toArray();
     }
 
     protected function getTemplateJoinStatement() : Expression
