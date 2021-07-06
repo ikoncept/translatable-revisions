@@ -219,7 +219,11 @@ trait HasTranslatedRevisions
             return null;
         }
         if(is_array($data) && Arr::isAssoc($data)) {
-           return [$data['id']];
+            if(isset($data['id'])) {
+                return [$data['id']];
+            } else {
+                return $data;
+            }
         }
         if(is_array($data) && ! Arr::isAssoc($data)) {
             if(is_numeric($data[0])) {
