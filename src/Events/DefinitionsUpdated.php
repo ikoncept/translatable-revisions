@@ -29,6 +29,8 @@ class DefinitionsUpdated
      */
     public function __construct(Collection $definitions, $model)
     {
+        // Update parent updated_at
+        $model->touch();
         $this->definitions = $definitions;
         $this->model = $model;
     }

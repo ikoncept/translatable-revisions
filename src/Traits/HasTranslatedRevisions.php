@@ -20,6 +20,8 @@ use Infab\TranslatableRevisions\Models\RevisionMeta;
 use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 use Illuminate\Support\Str;
+use Infab\TranslatableRevisions\Events\TranslatedRevisionDeleted;
+use Infab\TranslatableRevisions\Events\TranslatedRevisionUpdated;
 
 trait HasTranslatedRevisions
 {
@@ -101,6 +103,11 @@ trait HasTranslatedRevisions
             $model->meta()->delete();
             // Clear terms/defs
             DB::table('i18n_terms')->where('key', 'LIKE', $termKey . '%')->delete();
+            app()->events->dispatch(new TranslatedRevisionDeleted($model));
+        });
+
+        static::updated(function ($model) {
+            app()->events->dispatch(new TranslatedRevisionUpdated($model));
         });
     }
 

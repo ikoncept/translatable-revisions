@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Infab\TranslatableRevisions\Events\DefinitionsPublished;
 use Infab\TranslatableRevisions\Events\DefinitionsUpdated;
+use Infab\TranslatableRevisions\Events\TranslatedRevisionDeleted;
+use Infab\TranslatableRevisions\Events\TranslatedRevisionUpdated;
 use Infab\TranslatableRevisions\Models\I18nTerm;
 use Prophecy\Prophecy\Revealer;
 
@@ -73,6 +75,7 @@ class PageTest extends TestCase
     public function it_can_update_fields_for_a_page()
     {
         // Arrange
+        Event::fake(TranslatedRevisionUpdated::class);
         $template = RevisionTemplate::factory()->create();
         $templateFields = RevisionTemplateField::factory()->count(5)->create([
             'template_id' => $template->id,
@@ -80,7 +83,9 @@ class PageTest extends TestCase
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
-            'revision' => 10
+            'revision' => 10,
+            'created_at' => now()->subYear(),
+            'updated_at' => now()->subMonth()
         ]);
 
         // Act
@@ -89,15 +94,20 @@ class PageTest extends TestCase
             $key => 'En hel del saker'
         ], 'sv');
 
+        $updatedFields = $page->updateContent([
+            $key => 'En hel del andra saker'
+        ], 'sv');
+
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => json_encode('En hel del saker'),
+            'content' => json_encode('En hel del andra saker'),
             'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_terms', [
             'key' => 'pages_' . $page->id .'_'. $page->revision . '_' . $key,
             'description' => $templateFields->first()->name . ' for ' . $page->title
         ]);
+        Event::assertDispatched(TranslatedRevisionUpdated::class);
     }
 
     /** @test **/
@@ -334,6 +344,7 @@ class PageTest extends TestCase
     public function it_can_delete_a_page()
     {
         // Arrange
+        Event::fake(TranslatedRevisionDeleted::class);
         $template = RevisionTemplate::factory()->create();
         $titleField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
@@ -388,6 +399,7 @@ class PageTest extends TestCase
             'model_id' => $page->id,
             'model_type' => 'Infab\TranslatableRevisions\Models\Page'
         ]);
+        Event::assertDispatched(TranslatedRevisionDeleted::class);
     }
 
     /** @test **/
