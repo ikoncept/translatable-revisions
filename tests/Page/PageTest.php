@@ -389,4 +389,20 @@ class PageTest extends TestCase
             'model_type' => 'Infab\TranslatableRevisions\Models\Page'
         ]);
     }
+
+    /** @test **/
+    public function it_can_get_revision_options()
+    {
+        // Arrange
+        $page = Page::factory()->create([
+            'revision' => 10
+        ]);
+        $tagsToFlush = $page->getRevisionOptions()->cacheTagsToFlush;
+
+        // Act
+
+        // Assert
+        $this->assertIsArray($tagsToFlush);
+        $this->assertEquals('cms_pages', $tagsToFlush[0]);
+    }
 }

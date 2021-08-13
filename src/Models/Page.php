@@ -23,7 +23,8 @@ class Page extends Model
             ->registerGetters([
                 'image' => 'getImages',
                 'repeater' => 'getRepeater'
-            ]);
+            ])
+            ->registerCacheTagsToFlush(['cms_pages']);
     }
 
     /**

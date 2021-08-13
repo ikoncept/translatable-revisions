@@ -30,6 +30,15 @@ class RevisionOptions {
 
 
     /**
+     * Arrayg of tags that should be
+     * flushed on save and delete
+     *
+     * @var array
+     */
+    public $cacheTagsToFlush = [];
+
+
+    /**
      * Default included getters
      * @var array $defaultGetters
      */
@@ -76,6 +85,13 @@ class RevisionOptions {
     public function registerDefaultTemplate(string $slug) : self
     {
         $this->defaultTemplate = $slug;
+
+        return $this;
+    }
+
+    public function registerCacheTagsToFlush(array $tags) : self
+    {
+        $this->cacheTagsToFlush = $tags;
 
         return $this;
     }
