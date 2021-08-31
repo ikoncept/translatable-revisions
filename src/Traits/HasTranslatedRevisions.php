@@ -183,7 +183,7 @@ trait HasTranslatedRevisions
                 $updated = RevisionMeta::updateOrCreate(
                     ['meta_key' => $fieldKey,
                     'model_id' => $this->id,
-                    'model_type' => self::class,
+                    'model_type' => $this->getMorphClass(),
                     'model_version' => $this->revisionNumber],
                     [
                         'meta_value' => $multiData
@@ -385,7 +385,7 @@ trait HasTranslatedRevisions
             });
         DB::table(config('translatable-revisions.revision_meta_table_name'))
             ->where('model_version', '<=', $revision)
-            ->where('model_type', self::class)
+            ->where('model_type', $this->getMorphClass())
             ->where('model_id', $this->id)
             ->delete();
     }
@@ -447,7 +447,7 @@ trait HasTranslatedRevisions
         $updated = RevisionMeta::updateOrCreate(
             ['meta_key' => $fieldKey,
             'model_id' => $this->id,
-            'model_type' => self::class,
+            'model_type' => $this->getMorphClass(),
             'model_version' => $this->revisionNumber],
             [
                 'meta_value' => $this->fromArrayToIdArray($data)
