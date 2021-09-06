@@ -183,7 +183,7 @@ trait HasTranslatedRevisions
                 $updated = RevisionMeta::updateOrCreate(
                     ['meta_key' => $fieldKey,
                     'model_id' => $this->id,
-                    'model_type' => $this->getMorphClass(),
+                    'model_type' => $this->morphClass ?? $this->getMorphClass(),
                     'model_version' => $this->revisionNumber],
                     [
                         'meta_value' => $multiData
@@ -309,8 +309,8 @@ trait HasTranslatedRevisions
         $this->setLocale($locale);
         $this->setRevision($revision);
 
-        $termWithoutKey =  $this->getTable() . '_' . $this->id .'_'. $revision . '_';
-
+        // Escape wild card chars
+        $termWithoutKey = "{$this->getTable()}\_{$this->id}\_{$this->revisionNumber}\_";
 
         $translatedFields = DB::table('i18n_terms')
             ->leftJoin('i18n_definitions', 'i18n_terms.id', '=', 'i18n_definitions.term_id')
@@ -323,18 +323,19 @@ trait HasTranslatedRevisions
                 'revision_template_fields.type',
                 'revision_template_fields.translated',
                 'revision_template_fields.key as template_key')
-            ->where('i18n_terms.key', 'LIKE', $termWithoutKey . '%')
+            ->whereRaw('i18n_terms.key LIKE ? ESCAPE "\"', [$termWithoutKey .'%'])
             ->where('i18n_definitions.locale', $this->locale)
             ->get();
 
-        $metaFields = $this->meta()
-            ->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
-            ->select(
-                'revision_meta.*',
-                'revision_template_fields.type'
-            )
-            ->where('model_version', $revision)
-            ->get();
+            $metaFields = RevisionMeta::where('model_type', $this->morphClass ?? $this->getMorphClass())
+                ->where('model_id', $this->id)
+                ->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
+                ->select(
+                    'revision_meta.*',
+                    'revision_template_fields.type'
+                )
+                ->where('model_version', $revision)
+                ->get();
 
         $metaData = $metaFields->mapWithKeys(function($metaItem) {
             return [$metaItem->meta_key => $this->getMeta($metaItem)];
@@ -385,7 +386,7 @@ trait HasTranslatedRevisions
             });
         DB::table(config('translatable-revisions.revision_meta_table_name'))
             ->where('model_version', '<=', $revision)
-            ->where('model_type', $this->getMorphClass())
+            ->where('model_type', $this->morphClass ?? $this->getMorphClass())
             ->where('model_id', $this->id)
             ->delete();
     }
@@ -447,7 +448,7 @@ trait HasTranslatedRevisions
         $updated = RevisionMeta::updateOrCreate(
             ['meta_key' => $fieldKey,
             'model_id' => $this->id,
-            'model_type' => $this->getMorphClass(),
+            'model_type' => $this->morphClass ?? $this->getMorphClass(),
             'model_version' => $this->revisionNumber],
             [
                 'meta_value' => $this->fromArrayToIdArray($data)

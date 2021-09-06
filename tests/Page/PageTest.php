@@ -15,6 +15,7 @@ use Infab\TranslatableRevisions\Events\DefinitionsPublished;
 use Infab\TranslatableRevisions\Events\DefinitionsUpdated;
 use Infab\TranslatableRevisions\Events\TranslatedRevisionDeleted;
 use Infab\TranslatableRevisions\Events\TranslatedRevisionUpdated;
+use Infab\TranslatableRevisions\Models\I18nDefinition;
 use Infab\TranslatableRevisions\Models\I18nTerm;
 use Prophecy\Prophecy\Revealer;
 
@@ -278,7 +279,7 @@ class PageTest extends TestCase
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
-            'revision' => 10
+            'revision' => 0
         ]);
 
         // Act
@@ -301,9 +302,10 @@ class PageTest extends TestCase
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
             ]
         ]);
+        // dd(I18nDefinition::all()->toArray(), I18nTerm::all()->toArray());
 
         // Act
-        $content = $page->getFieldContent(10);
+        $content = $page->getFieldContent(0);
 
         // Assert
         $this->assertEquals(3, count($content['boxes']));
