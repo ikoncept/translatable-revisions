@@ -105,7 +105,7 @@ class PageTest extends TestCase
             'locale' => 'sv'
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_' . $key,
+            'key' => 'pages'. $page->getDelimiter() . $page->id . $page->getDelimiter() . $page->revision . $page->getDelimiter() . $key,
             'description' => $templateFields->first()->name . ' for ' . $page->title
         ]);
         Event::assertDispatched(TranslatedRevisionUpdated::class);
@@ -155,10 +155,10 @@ class PageTest extends TestCase
         $terms = DB::table('i18n_terms')->get();
 
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_page_title',
+            'key' => 'pages'. $page->getDelimiter() . $page->id . $page->getDelimiter() . $page->revision . $page->getDelimiter() . 'page_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages_' . $page->id .'_'. $page->revision . '_boxes',
+            'key' => 'pages' . $page->getDelimiter() . $page->id . $page->getDelimiter() . $page->revision . $page->getDelimiter() . 'boxes',
         ]);
 
 
@@ -392,7 +392,7 @@ class PageTest extends TestCase
         ]);
 
         $this->assertDatabaseMissing('i18n_terms', [
-            'key' => 'pages_' . $page->id . '_' . '10_page_title'
+            'key' => 'pages' . $page->getDelimiter() . $page->id . $page->getDelimiter() . '10-page_title'
         ]);
         $this->assertDatabaseMissing('i18n_definitions', [
             'content' => 'The page title for the page'

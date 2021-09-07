@@ -10,7 +10,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Infab\TranslatableRevisions\Events\DefinitionsPublished;
 use Infab\TranslatableRevisions\Events\DefinitionsUpdated;
 use Infab\TranslatableRevisions\Models\I18nDefinition;
@@ -22,6 +21,7 @@ use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 use Illuminate\Support\Str;
 use Infab\TranslatableRevisions\Events\TranslatedRevisionDeleted;
 use Infab\TranslatableRevisions\Events\TranslatedRevisionUpdated;
+use Infab\TranslatableRevisions\Exceptions\FieldKeyNotFound;
 
 trait HasTranslatedRevisions
 {
@@ -55,6 +55,7 @@ trait HasTranslatedRevisions
      * @var int
      */
     public $revisionNumber;
+
 
     /**
      * Set the locale, with fallback
@@ -98,11 +99,16 @@ trait HasTranslatedRevisions
     protected static function bootHasTranslatedRevisions() : void
     {
         static::deleting(function ($model) {
-            $termKey = $model->getTable() . '_' . $model->id . '_';
+            $termKey = $model->getTable() . $model->getDelimiter() . $model->id . $model->getDelimiter();
             // Clear meta
-            $model->meta()->delete();
+            RevisionMeta::where('model_type', $model->morphClass ?? $model->getMorphClass())
+                ->where('model_id', $model->id)->get()
+                ->each(function($item){
+                    $item->delete();
+                });
+
             // Clear terms/defs
-            DB::table('i18n_terms')->where('key', 'LIKE', $termKey . '%')->delete();
+            DB::table('i18n_terms')->whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$termKey .'%', '\\'])->delete();
             app()->events->dispatch(new TranslatedRevisionDeleted($model));
         });
 
@@ -149,7 +155,7 @@ trait HasTranslatedRevisions
         $this->setRevision($revision);
 
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) use ($locale) {
-            $identifier =  $this->getTable() . '_' . $this->id .'_'. $this->revisionNumber . '_' . $fieldKey;
+            $identifier =  $this->getTable() . $this->getDelimiter() . $this->id . $this->getDelimiter() . $this->revisionNumber . $this->getDelimiter() . $fieldKey;
 
 
             // Should check if the template field is connected to the chosen template
@@ -163,13 +169,15 @@ trait HasTranslatedRevisions
                     })
                     ->firstOrFail();
             } catch (\Exception $e) {
-                abort(500, 'Field key not found for: ' . $fieldKey);
+                throw FieldKeyNotFound::fieldKeyNotFound($fieldKey);
             }
 
 
             // TODO
             if (! $templateField->translated && ! $templateField->repeater) {
-                DB::table('i18n_terms')->where('key', 'LIKE', $identifier . '%')->delete();
+                $term = $this->getTermWithoutKey($this->revisionNumber) . $this->getDelimiter() . $fieldKey;
+                DB::table('i18n_terms')->whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$term .'%', '\\'])->delete();
+
 
                 return $this->updateMetaItem($fieldKey, $data);
             }
@@ -297,6 +305,36 @@ trait HasTranslatedRevisions
             : DB::raw("concat( '%',revision_template_fields.key,'%' )");
     }
 
+    public function getDelimiter() : string
+    {
+       $delimiterConfig = config('translatable-revisions.delimiter');
+
+       if($delimiterConfig === '_') {
+           return '\_';
+       }
+
+        return $delimiterConfig;
+    }
+
+
+    /**
+     * Get the compound term key
+     *
+     * @param int|null $revision
+     * @return string
+     */
+    protected function getTermWithoutKey($revision = null) : string
+    {
+        $delimter = $this->getDelimiter();
+        if($revision) {
+            $rev = $revision;
+        } else {
+            $rev = $this->revisionNumber;
+        }
+
+        return  $this->getTable() . $delimter . $this->id . $delimter . $rev . $delimter;
+    }
+
     /**
      * Get the content for the field
      *
@@ -310,7 +348,7 @@ trait HasTranslatedRevisions
         $this->setRevision($revision);
 
         // Escape wild card chars
-        $termWithoutKey = "{$this->getTable()}\_{$this->id}\_{$this->revisionNumber}\_";
+        $termWithoutKey = $this->getTermWithoutKey();
 
         $translatedFields = DB::table('i18n_terms')
             ->leftJoin('i18n_definitions', 'i18n_terms.id', '=', 'i18n_definitions.term_id')
@@ -323,7 +361,7 @@ trait HasTranslatedRevisions
                 'revision_template_fields.type',
                 'revision_template_fields.translated',
                 'revision_template_fields.key as template_key')
-            ->whereRaw('i18n_terms.key LIKE ? ESCAPE "\"', [$termWithoutKey .'%'])
+            ->whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$termWithoutKey .'%', '\\'])
             ->where('i18n_definitions.locale', $this->locale)
             ->get();
 
@@ -377,9 +415,9 @@ trait HasTranslatedRevisions
      */
     public function purgeOldRevisions($revision)
     {
-        $identifier =  $this->getTable() . '_' . $this->id .'_'. $revision . '_';
+        $identifier =  $this->getTermWithoutKey($revision);
 
-        I18nTerm::where('key', 'LIKE', $identifier . '%')->get()
+        I18nTerm::whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$identifier .'%', '\\'])->get()
             ->each(function ($item) {
                 $item->definitions()->delete();
                 $item->delete();
@@ -419,10 +457,10 @@ trait HasTranslatedRevisions
     /**
      * Get meta value
      *
-     * @param RevisionMeta $meta
+     * @param RevisionMeta|\Illuminate\Database\Eloquent\Model $meta
      * @return array|null
      */
-    public function getMeta(RevisionMeta $meta)
+    public function getMeta($meta)
     {
         $metaValue = $meta->meta_value;
         $value = null;
@@ -478,7 +516,7 @@ trait HasTranslatedRevisions
      * Handle callable
      *
      * @param mixed $callable
-     * @param RevisionMeta|null $meta
+     * @param \Illuminate\Database\Eloquent\Model|RevisionMeta|null $meta
      * @return mixed
      */
     public function handleCallable($callable, $meta)
@@ -627,7 +665,8 @@ trait HasTranslatedRevisions
     {
         return collect($data)->map(function ($item, $index) use ($fieldKey, $templateField) {
             $item = collect($item)->map(function ($subfield, $key) use ($fieldKey, $index, $templateField) {
-                $identifier = $this->getTable() . '_' . $this->id . '_' . $this->revisionNumber . '_' . $fieldKey . '__' . $index . '_' . $key;
+                $delimiter = $this->getDelimiter();
+                $identifier = $this->getTable() . $delimiter . $this->id . $delimiter . $this->revisionNumber . $delimiter . $fieldKey . $delimiter . $delimiter . $index . $delimiter . $key;
 
                 // Create/Update the term
                 $term = I18nTerm::updateOrCreate(

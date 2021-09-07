@@ -9,5 +9,6 @@ return [
     'supportedLocales' => [
         'en' => ['name' => 'English', 'script' => 'Latn', 'native' => 'English', 'regional' => 'en_GB'],
         'sv' => ['name' => 'Swedish', 'script' => 'Latn', 'native' => 'svenska', 'regional' => 'sv_SE']
-    ]
+    ],
+    'delimiter' => env('TRANSLATABLE_REVISIONS_DELIMITER', '-')
 ];
