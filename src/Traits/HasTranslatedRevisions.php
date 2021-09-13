@@ -155,7 +155,8 @@ trait HasTranslatedRevisions
         $this->setRevision($revision);
 
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) use ($locale) {
-            $identifier =  $this->getTable() . $this->getDelimiter() . $this->id . $this->getDelimiter() . $this->revisionNumber . $this->getDelimiter() . $fieldKey;
+            $delimter = $this->getDelimiter(true);
+            $identifier =  $this->getTable() . $delimter . $this->id . $delimter . $this->revisionNumber . $delimter . $fieldKey;
 
 
             // Should check if the template field is connected to the chosen template
@@ -305,11 +306,14 @@ trait HasTranslatedRevisions
             : DB::raw("concat( '%',revision_template_fields.key,'%' )");
     }
 
-    public function getDelimiter() : string
+    public function getDelimiter(bool $isSaving = false) : string
     {
        $delimiterConfig = config('translatable-revisions.delimiter');
 
        if($delimiterConfig === '_') {
+           if($isSaving) {
+               return $delimiterConfig;
+           }
            return '\_';
        }
 
@@ -665,7 +669,7 @@ trait HasTranslatedRevisions
     {
         return collect($data)->map(function ($item, $index) use ($fieldKey, $templateField) {
             $item = collect($item)->map(function ($subfield, $key) use ($fieldKey, $index, $templateField) {
-                $delimiter = $this->getDelimiter();
+                $delimiter = $this->getDelimiter(true);
                 $identifier = $this->getTable() . $delimiter . $this->id . $delimiter . $this->revisionNumber . $delimiter . $fieldKey . $delimiter . $delimiter . $index . $delimiter . $key;
 
                 // Create/Update the term
