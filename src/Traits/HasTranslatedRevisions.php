@@ -140,7 +140,7 @@ trait HasTranslatedRevisions
      * Gets the tempplate field via fieldKey
      *
      * @param string $fieldKey
-     * @return RevisonTemplateField
+     * @return \Infab\TranslatableRevisions\Models\RevisionTemplateField
      * @throws FieldKeyNotFound
      */
     public function getTemplateField(string $fieldKey)
