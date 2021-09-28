@@ -5,7 +5,6 @@ namespace Infab\TranslatableRevisions\Traits;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -100,15 +99,15 @@ trait HasTranslatedRevisions
     {
         static::deleting(function ($model) {
             $termKey = $model->getTable() . $model->getDelimiter() . $model->id . $model->getDelimiter();
+
             // Clear meta
-            RevisionMeta::where('model_type', $model->morphClass ?? $model->getMorphClass())
-                ->where('model_id', $model->id)->get()
+            RevisionMeta::modelMeta($model)
                 ->each(function($item){
                     $item->delete();
                 });
 
             // Clear terms/defs
-            DB::table('i18n_terms')->whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$termKey .'%', '\\'])->delete();
+            (new I18nTerm())->clearTermsWithKey($termKey);
             app()->events->dispatch(new TranslatedRevisionDeleted($model));
         });
 
@@ -138,6 +137,31 @@ trait HasTranslatedRevisions
     }
 
     /**
+     * Gets the tempplate field via fieldKey
+     *
+     * @param string $fieldKey
+     * @return RevisonTemplateField
+     * @throws FieldKeyNotFound
+     */
+    public function getTemplateField(string $fieldKey)
+    {
+        $defTemplateSlug = $this->getRevisionOptions()->defaultTemplate;
+        try {
+            $templateField = RevisionTemplateField::where('key', $fieldKey)
+                ->whereHas('template', function($query) use ($defTemplateSlug) {
+                    if($defTemplateSlug) {
+                        $query->where('slug', $defTemplateSlug);
+                    }
+                })
+                ->firstOrFail();
+
+            return $templateField;
+        } catch (\Exception $e) {
+            throw FieldKeyNotFound::fieldKeyNotFound($fieldKey);
+        }
+    }
+
+    /**
      * Update content for fields
      *
      * @param array $fieldData
@@ -152,33 +176,20 @@ trait HasTranslatedRevisions
             $this->setLocale($locale);
             $locale = $this->locale;
         }
+
         $this->setRevision($revision);
 
         $definitions = collect($fieldData)->map(function ($data, $fieldKey) use ($locale) {
             $delimter = $this->getDelimiter(true);
             $identifier =  $this->getTable() . $delimter . $this->id . $delimter . $this->revisionNumber . $delimter . $fieldKey;
+            $templateField = $this->getTemplateField($fieldKey);
 
 
-            // Should check if the template field is connected to the chosen template
-            $defTemplateSlug = $this->getRevisionOptions()->defaultTemplate;
-            try {
-                $templateField = RevisionTemplateField::where('key', $fieldKey)
-                    ->whereHas('template', function($query) use ($defTemplateSlug) {
-                        if($defTemplateSlug) {
-                            $query->where('slug', $defTemplateSlug);
-                        }
-                    })
-                    ->firstOrFail();
-            } catch (\Exception $e) {
-                throw FieldKeyNotFound::fieldKeyNotFound($fieldKey);
-            }
-
-
-            // TODO
+            // If the template field isn't translated and isn't a repeater, it's probably
+            // a meta field
             if (! $templateField->translated && ! $templateField->repeater) {
                 $term = $this->getTermWithoutKey($this->revisionNumber) . $this->getDelimiter() . $fieldKey;
                 DB::table('i18n_terms')->whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$term .'%', '\\'])->delete();
-
 
                 return $this->updateMetaItem($fieldKey, $data);
             }
@@ -186,33 +197,15 @@ trait HasTranslatedRevisions
 
             if (is_array($data) && ! Arr::isAssoc($data) && ! $templateField->translated) {
 
+                // Repeater
                 $multiData = $this->handleSequentialArray($data, $fieldKey, $templateField);
 
-
-                $updated = RevisionMeta::updateOrCreate(
-                    ['meta_key' => $fieldKey,
-                    'model_id' => $this->id,
-                    'model_type' => $this->morphClass ?? $this->getMorphClass(),
-                    'model_version' => $this->revisionNumber],
-                    [
-                        'meta_value' => $multiData
-                    ]
-                );
+                $updated = $this->updateMetaItem($fieldKey, $multiData);
 
                 return ['definition' => $multiData, 'term' => $identifier, 'meta' => $updated];
             } else {
-                // Find term
-                $term = I18nTerm::updateOrCreate(
-                    ['key' => $identifier],
-                    ['description' => $templateField->name . ' for ' . $this->title]
-                );
-                $definition = I18nDefinition::updateOrCreate(
-                    [
-                        'term_id' => $term->id,
-                        'locale' => $locale,
-                    ],
-                    ['content' => $this->transformData($data, $templateField)]
-                );
+                // Translated field
+                list($term, $definition) = $this->updateOrCreateTermAndDefinition($identifier, $templateField, $locale, $data);
 
                 return ['definition' => $definition, 'term' => $term];
             }
@@ -221,6 +214,33 @@ trait HasTranslatedRevisions
         app()->events->dispatch(new DefinitionsUpdated($definitions, $this));
 
         return $definitions;
+    }
+
+    /**
+     * Update or creates terms and definitions
+     *
+     * @param string $identifier
+     * @param RevisionTemplateField $templateField
+     * @param string $locale
+     * @param mixed $data
+     * @param boolean $transformData
+     * @return array
+     */
+    public function updateOrCreateTermAndDefinition(string $identifier, RevisionTemplateField $templateField, string $locale, $data, bool $transformData = true) : array
+    {
+        $term = I18nTerm::updateOrCreate(
+            ['key' => $identifier],
+            ['description' => $templateField->name . ' for ' . $this->title]
+        );
+        $definition = I18nDefinition::updateOrCreate(
+            [
+                'term_id' => $term->id,
+                'locale' => $locale,
+            ],
+            ['content' => $transformData ? $this->transformData($data, $templateField) : $data]
+        );
+
+        return [$term, $definition];
     }
 
     /**
@@ -234,6 +254,7 @@ trait HasTranslatedRevisions
         if(empty($data)) {
             return null;
         }
+
         if(is_array($data) && Arr::isAssoc($data)) {
             if(isset($data['id'])) {
                 return [$data['id']];
@@ -241,6 +262,7 @@ trait HasTranslatedRevisions
                 return $data;
             }
         }
+
         if(is_array($data) && ! Arr::isAssoc($data)) {
             if(is_numeric($data[0])) {
                 return $data;
@@ -250,6 +272,7 @@ trait HasTranslatedRevisions
             }
             return collect($data)->pluck('id')->toArray();
         }
+
         return $data;
     }
 
@@ -299,12 +322,6 @@ trait HasTranslatedRevisions
         })->toArray();
     }
 
-    protected function getTemplateJoinStatement() : Expression
-    {
-        return (get_class($this->getConnection()) === 'Illuminate\Database\SQLiteConnection')
-            ? DB::raw("'%' || revision_template_fields.key || '%'")
-            : DB::raw("concat( '%',revision_template_fields.key,'%' )");
-    }
 
     public function getDelimiter(bool $isSaving = false) : string
     {
@@ -354,36 +371,18 @@ trait HasTranslatedRevisions
         // Escape wild card chars
         $termWithoutKey = $this->getTermWithoutKey();
 
-        $translatedFields = DB::table('i18n_terms')
-            ->leftJoin('i18n_definitions', 'i18n_terms.id', '=', 'i18n_definitions.term_id')
-            ->leftJoin('revision_template_fields', 'i18n_terms.key', 'LIKE',  $this->getTemplateJoinStatement())
-            ->select(
-                'i18n_terms.id', 'i18n_terms.key',
-                'i18n_terms.id as term_id',
-                'i18n_definitions.content',
-                'revision_template_fields.repeater',
-                'revision_template_fields.type',
-                'revision_template_fields.translated',
-                'revision_template_fields.key as template_key')
-            ->whereRaw('i18n_terms.key LIKE ? ESCAPE ?', [$termWithoutKey .'%', '\\'])
-            ->where('i18n_definitions.locale', $this->locale)
-            ->get();
+        $translatedFields = I18nTerm::translatedFields(
+            $termWithoutKey,
+            $this->locale
+        )->get();
 
-            $metaFields = RevisionMeta::where('model_type', $this->morphClass ?? $this->getMorphClass())
-                ->where('model_id', $this->id)
-                ->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
-                ->select(
-                    'revision_meta.*',
-                    'revision_template_fields.type'
-                )
-                ->where('model_version', $revision)
-                ->get();
+        $metaFields = RevisionMeta::modelMeta($this)
+            ->metaFields($revision)
+            ->get();
 
         $metaData = $metaFields->mapWithKeys(function($metaItem) {
             return [$metaItem->meta_key => $this->getMeta($metaItem)];
         });
-
-        // $repeaterTypes =
 
         $grouped = collect($translatedFields)->mapWithKeys(function($item, $key) {
             if($item->repeater) {
@@ -537,52 +536,15 @@ trait HasTranslatedRevisions
     /**
      * Get repeater
      *
-     * @param mixed $data
+     * @param mixed $repeater
      * @return array
      */
-    public function getRepeaterLegacy($data) : array
+    public function getRepeater($repeater) : array
     {
-        $repeater = $data->meta_value;
-
-        return collect($repeater)->map(function($repeaterItem) {
-            return collect($repeaterItem)->map(function($termKey) {
-                // Translate via the termkey
-                return $this->translateByKey($termKey, $this->locale);
-            })->map(function($translatedItem, $key) {
-                // If the key contains children, handle children
-                if(Str::contains($key, 'children')) {
-                    return $this->handleChildRepeater($translatedItem);
-                }
-                // If there is an image to take care of
-                if(Str::contains($key, 'image')) {
-                    return $this->handleCallable(
-                        [$this,  $this->getRevisionOptions()->getters['image']],
-                        RevisionMeta::make([
-                            'meta_value' => $translatedItem
-                        ])
-                    );
-                }
-                // $this->transformIfImage($key, $translatedItem);
-                // Otherwise return the translated item as is
-                return $translatedItem;
-            });
-        })->toArray();
-    }
-
-    /**
-     * Get repeater
-     *
-     * @param mixed $data
-     * @return array
-     */
-    public function getRepeater($data) : array
-    {
-        $repeater = $data;
-
         return collect($repeater)->map(function($child) {
             return collect($child)->map(function($value, $key) {
 
-                // Check if key existsss in the revision options
+                // Check if key exists in the revision options
                 if(array_key_exists($key, $this->getRevisionOptions()->getters))  {
                     return $this->handleCallable(
                         [$this,  $this->getRevisionOptions()->getters[$key]],
@@ -634,9 +596,6 @@ trait HasTranslatedRevisions
      */
     public function publish(int $revision)
     {
-        // Should publish all languages?
-        // NEW
-        $f = I18nLocale::where('enabled', 1)->count();
         $this->isPublishing = true;
         $updatedContent = I18nLocale::where('enabled', 1)
             ->get()->mapWithKeys(function ($locale) use ($revision) {
@@ -673,18 +632,7 @@ trait HasTranslatedRevisions
                 $identifier = $this->getTable() . $delimiter . $this->id . $delimiter . $this->revisionNumber . $delimiter . $fieldKey . $delimiter . $delimiter . $index . $delimiter . $key;
 
                 // Create/Update the term
-                $term = I18nTerm::updateOrCreate(
-                    ['key' => $identifier],
-                    ['description' => $templateField->name . ' for ' . $this->title]
-                );
-
-                I18nDefinition::updateOrCreate(
-                    [
-                        'term_id' => $term->id,
-                        'locale' => $this->locale
-                    ],
-                    ['content' => $subfield]
-                );
+                $this->updateOrCreateTermAndDefinition($identifier, $templateField, $this->locale, $subfield, false);
 
                 return $identifier;
             });

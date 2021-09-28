@@ -1,6 +1,7 @@
 <?php
 namespace Infab\TranslatableRevisions\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -39,4 +40,21 @@ class RevisionMeta extends Model
     {
         return $this->morphTo();
     }
+
+    public function scopeModelMeta(Builder $query, Model $model) : Builder
+    {
+        return $query->where('model_type', $model->morphClass ?? $model->getMorphClass())
+            ->where('model_id', $model->id);
+    }
+
+    public function scopeMetaFields(Builder $query, int $revision) : Builder
+    {
+        return $query->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
+            ->select(
+                'revision_meta.*',
+                'revision_template_fields.type'
+            )
+            ->where('model_version', $revision);
+    }
+
 }
