@@ -47,7 +47,7 @@ class RevisionMeta extends Model
             ->where('model_id', $model->id);
     }
 
-    public function scopeMetaFields(Builder $query, int $revision) : Builder
+    public function scopeMetaFields(Builder $query, mixed $revision) : Builder
     {
         return $query->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
             ->select(
