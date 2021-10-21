@@ -57,7 +57,7 @@ class CreateI18nTables extends Migration
 
         DB::table($prefix . 'i18n_locales')->insert([
             'name' => 'Swedish',
-            'native' => 'Svensk',
+            'native' => 'Svenska',
             'iso_code' => 'sv',
             'regional' => 'sv_SE',
             'enabled' => true
