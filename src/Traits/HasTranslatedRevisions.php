@@ -62,7 +62,7 @@ trait HasTranslatedRevisions
      * @param string $locale
      * @return string
      */
-    public function setLocale($locale) : string
+    public function setLocale($locale): string
     {
         if ($locale) {
             $this->locale = $locale;
@@ -73,7 +73,7 @@ trait HasTranslatedRevisions
         return $this->locale;
     }
 
-    public function getLocale() : string
+    public function getLocale(): string
     {
         return $this->locale;
     }
@@ -84,7 +84,7 @@ trait HasTranslatedRevisions
      * @param integer|null $revision
      * @return int
      */
-    public function setRevision($revision) : int
+    public function setRevision($revision): int
     {
         if ($revision) {
             $this->revisionNumber = $revision;
@@ -95,14 +95,14 @@ trait HasTranslatedRevisions
         return (int) $this->revisionNumber;
     }
 
-    protected static function bootHasTranslatedRevisions() : void
+    protected static function bootHasTranslatedRevisions(): void
     {
         static::deleting(function ($model) {
             $termKey = $model->getTable() . $model->getDelimiter() . $model->id . $model->getDelimiter();
 
             // Clear meta
             RevisionMeta::modelMeta($model)
-                ->each(function($item){
+                ->each(function ($item) {
                     $item->delete();
                 });
 
@@ -121,7 +121,7 @@ trait HasTranslatedRevisions
      *
      * @return BelongsTo
      */
-    public function template() : BelongsTo
+    public function template(): BelongsTo
     {
         return $this->belongsTo(RevisionTemplate::class, 'template_id', 'id');
     }
@@ -137,6 +137,16 @@ trait HasTranslatedRevisions
     }
 
     /**
+     * Relation for terms
+     *
+     * @return MorphMany
+     */
+    public function terms(): MorphMany
+    {
+        return $this->morphMany(I18nTerm::class, 'model');
+    }
+
+    /**
      * Gets the tempplate field via fieldKey
      *
      * @param string $fieldKey
@@ -148,8 +158,8 @@ trait HasTranslatedRevisions
         $defTemplateSlug = $this->getRevisionOptions()->defaultTemplate;
         try {
             $templateField = RevisionTemplateField::where('key', $fieldKey)
-                ->whereHas('template', function($query) use ($defTemplateSlug) {
-                    if($defTemplateSlug) {
+                ->whereHas('template', function ($query) use ($defTemplateSlug) {
+                    if ($defTemplateSlug) {
                         $query->where('slug', $defTemplateSlug);
                     }
                 })
@@ -169,10 +179,10 @@ trait HasTranslatedRevisions
      * @param int|null $revision
      * @return Collection
      */
-    public function updateContent(array $fieldData, $locale = null, $revision = null) : Collection
+    public function updateContent(array $fieldData, $locale = null, $revision = null): Collection
     {
         // Revision is always the current, if not overridden
-        if(! $locale) {
+        if (! $locale) {
             $this->setLocale($locale);
             $locale = $this->locale;
         }
@@ -226,7 +236,7 @@ trait HasTranslatedRevisions
      * @param boolean $transformData
      * @return array
      */
-    public function updateOrCreateTermAndDefinition(string $identifier, RevisionTemplateField $templateField, string $locale, $data, bool $transformData = true) : array
+    public function updateOrCreateTermAndDefinition(string $identifier, RevisionTemplateField $templateField, string $locale, $data, bool $transformData = true): array
     {
         $term = I18nTerm::updateOrCreate(
             ['key' => $identifier],
@@ -240,6 +250,8 @@ trait HasTranslatedRevisions
             ['content' => $transformData ? $this->transformData($data, $templateField) : $data]
         );
 
+        $this->terms()->save($term);
+
         return [$term, $definition];
     }
 
@@ -251,23 +263,23 @@ trait HasTranslatedRevisions
      */
     protected function fromArrayToIdArray($data)
     {
-        if(empty($data)) {
+        if (empty($data)) {
             return null;
         }
 
-        if(is_array($data) && Arr::isAssoc($data)) {
-            if(isset($data['id'])) {
+        if (is_array($data) && Arr::isAssoc($data)) {
+            if (isset($data['id'])) {
                 return [$data['id']];
             } else {
                 return $data;
             }
         }
 
-        if(is_array($data) && ! Arr::isAssoc($data)) {
-            if(is_numeric($data[0])) {
+        if (is_array($data) && ! Arr::isAssoc($data)) {
+            if (is_numeric($data[0])) {
                 return $data;
             }
-            if(! array_key_exists('id', $data[0])) {
+            if (! array_key_exists('id', $data[0])) {
                 return $data;
             }
             return collect($data)->pluck('id')->toArray();
@@ -307,10 +319,10 @@ trait HasTranslatedRevisions
         return $data;
     }
 
-    protected function handleSpecialTypes(array $repeater) : array
+    protected function handleSpecialTypes(array $repeater): array
     {
-        return collect($repeater)->filter(function($item, $key) use ($repeater) {
-            if(empty($repeater[$key])) {
+        return collect($repeater)->filter(function ($item, $key) use ($repeater) {
+            if (empty($repeater[$key])) {
                 return false;
             }
             return true;
@@ -323,16 +335,16 @@ trait HasTranslatedRevisions
     }
 
 
-    public function getDelimiter(bool $isSaving = false) : string
+    public function getDelimiter(bool $isSaving = false): string
     {
-       $delimiterConfig = config('translatable-revisions.delimiter');
+        $delimiterConfig = config('translatable-revisions.delimiter');
 
-       if($delimiterConfig === '_') {
-           if($isSaving) {
-               return $delimiterConfig;
-           }
-           return '\_';
-       }
+        if ($delimiterConfig === '_') {
+            if ($isSaving) {
+                return $delimiterConfig;
+            }
+            return '\_';
+        }
 
         return $delimiterConfig;
     }
@@ -344,10 +356,10 @@ trait HasTranslatedRevisions
      * @param int|null $revision
      * @return string
      */
-    protected function getTermWithoutKey($revision = null) : string
+    protected function getTermWithoutKey($revision = null): string
     {
         $delimter = $this->getDelimiter();
-        if($revision) {
+        if ($revision) {
             $rev = $revision;
         } else {
             $rev = $this->revisionNumber;
@@ -363,7 +375,7 @@ trait HasTranslatedRevisions
      * @param string|null $locale
      * @return Collection
      */
-    public function getFieldContent($revision = null, $locale = null) : Collection
+    public function getFieldContent($revision = null, $locale = null): Collection
     {
         $this->setLocale($locale);
         $this->setRevision($revision);
@@ -380,19 +392,19 @@ trait HasTranslatedRevisions
             ->metaFields($revision)
             ->get();
 
-        $metaData = $metaFields->mapWithKeys(function($metaItem) {
+        $metaData = $metaFields->mapWithKeys(function ($metaItem) {
             return [$metaItem->meta_key => $this->getMeta($metaItem)];
         });
 
-        $grouped = collect($translatedFields)->mapWithKeys(function($item, $key) {
-            if($item->repeater) {
+        $grouped = collect($translatedFields)->mapWithKeys(function ($item, $key) {
+            if ($item->repeater) {
                 $content = json_decode($item->content, true);
 
                 return [$item->template_key  => $this->getRepeater($content)];
             }
 
-            if(in_array($item->type, $this->getRevisionOptions()->specialTypes)) {
-                if(array_key_exists($item->type, $this->getRevisionOptions()->getters))  {
+            if (in_array($item->type, $this->getRevisionOptions()->specialTypes)) {
+                if (array_key_exists($item->type, $this->getRevisionOptions()->getters)) {
                     return [
                         $item->template_key  => $this->handleCallable(
                             [$this,  $this->getRevisionOptions()->getters[$item->type]],
@@ -484,7 +496,7 @@ trait HasTranslatedRevisions
      * @param mixed $data
      * @return RevisionMeta
      */
-    public function updateMetaItem($fieldKey, $data) : RevisionMeta
+    public function updateMetaItem($fieldKey, $data): RevisionMeta
     {
         $updated = RevisionMeta::updateOrCreate(
             ['meta_key' => $fieldKey,
@@ -504,10 +516,10 @@ trait HasTranslatedRevisions
      * @param array $data
      * @return array
      */
-    public function updateMetaContent(array $data) : array
+    public function updateMetaContent(array $data): array
     {
         $updatedItems = [];
-        foreach($data as $key => $content) {
+        foreach ($data as $key => $content) {
             $updatedItems[] = $this->updateMetaItem($key, $content);
         }
 
@@ -539,13 +551,13 @@ trait HasTranslatedRevisions
      * @param mixed $repeater
      * @return array
      */
-    public function getRepeater($repeater) : array
+    public function getRepeater($repeater): array
     {
-        return collect($repeater)->map(function($child) {
-            return collect($child)->map(function($value, $key) {
+        return collect($repeater)->map(function ($child) {
+            return collect($child)->map(function ($value, $key) {
 
                 // Check if key exists in the revision options
-                if(array_key_exists($key, $this->getRevisionOptions()->getters))  {
+                if (array_key_exists($key, $this->getRevisionOptions()->getters)) {
                     return $this->handleCallable(
                         [$this,  $this->getRevisionOptions()->getters[$key]],
                         RevisionMeta::make([
@@ -553,7 +565,7 @@ trait HasTranslatedRevisions
                         ])
                     );
                 }
-                if(Str::contains($key, 'children')) {
+                if (Str::contains($key, 'children')) {
                     return $this->handleChildRepeater($value);
                 }
                 return $value;
@@ -568,14 +580,14 @@ trait HasTranslatedRevisions
      * @param array|null $translatedItem
      * @return Collection
      */
-    public function handleChildRepeater($translatedItem) : Collection
+    public function handleChildRepeater($translatedItem): Collection
     {
-        if( ! $translatedItem) {
+        if (! $translatedItem) {
             return collect([]);
         }
-        return collect($translatedItem)->transform(function($child) {
-            return collect($child)->map(function($item, $key) {
-                if(array_key_exists($key, $this->getRevisionOptions()->getters))  {
+        return collect($translatedItem)->transform(function ($child) {
+            return collect($child)->map(function ($item, $key) {
+                if (array_key_exists($key, $this->getRevisionOptions()->getters)) {
                     return $this->handleCallable(
                         [$this,  $this->getRevisionOptions()->getters[$key]],
                         RevisionMeta::make([
@@ -624,7 +636,7 @@ trait HasTranslatedRevisions
      * @param RevisionTemplateField $templateField
      * @return Collection
      */
-    protected function handleSequentialArray(array $data, $fieldKey, $templateField) : Collection
+    protected function handleSequentialArray(array $data, $fieldKey, $templateField): Collection
     {
         return collect($data)->map(function ($item, $index) use ($fieldKey, $templateField) {
             $item = collect($item)->map(function ($subfield, $key) use ($fieldKey, $index, $templateField) {
