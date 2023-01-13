@@ -19,7 +19,6 @@ class TranslatableRevisionsServiceProvider extends ServiceProvider
             __DIR__.'/../config/translatable-revisions.php' => config_path('translatable-revisions.php'),
         ], 'config');
 
-
         // Migrations
         $this->publishes([
             __DIR__.'/../database/migrations/create_translatable_revisions_table.php.stub' => $this->getMigrationFileName('create_translatable_revisions_table.php'),

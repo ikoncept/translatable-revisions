@@ -1,12 +1,13 @@
 <?php
+
 namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Infab\TranslatableRevisions\Database\Factories\PageFactory;
 use Infab\TranslatableRevisions\Traits\HasTranslatedRevisions;
-use Illuminate\Support\Str;
 use Infab\TranslatableRevisions\Traits\RevisionOptions;
 
 class Page extends Model
@@ -16,13 +17,13 @@ class Page extends Model
     /**
      * Get the options for the revisions.
      */
-    public function getRevisionOptions() : RevisionOptions
+    public function getRevisionOptions(): RevisionOptions
     {
         return RevisionOptions::create()
             ->registerSpecialTypes(['image'])
             ->registerGetters([
                 'image' => 'getImages',
-                'repeater' => 'getRepeater'
+                'repeater' => 'getRepeater',
             ])
             ->registerCacheTagsToFlush(['cms_pages']);
     }
@@ -30,10 +31,10 @@ class Page extends Model
     /**
      * Get images
      *
-     * @param RevisionMeta|null $meta
+     * @param  RevisionMeta|null  $meta
      * @return Collection
      */
-    public function getImages(RevisionMeta $meta = null) : Collection
+    public function getImages(RevisionMeta $meta = null): Collection
     {
         return collect($meta);
     }
@@ -47,7 +48,6 @@ class Page extends Model
     {
         return PageFactory::new();
     }
-
 
     protected $dates = ['published_at'];
 
@@ -63,7 +63,7 @@ class Page extends Model
     /**
      * Set the title attribute/slug
      *
-     * @param mixed $value
+     * @param  mixed  $value
      * @return void
      */
     public function setTitleAttribute($value)

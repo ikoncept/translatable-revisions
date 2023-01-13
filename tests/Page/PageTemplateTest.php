@@ -3,7 +3,6 @@
 namespace Infab\TranslatableRevisions\Tests\Page;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Infab\TranslatableRevisions\Models\Page;
 use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 use Infab\TranslatableRevisions\Tests\TestCase;
@@ -26,7 +25,7 @@ class RevisionTemplateTest extends TestCase
         // Arrange
         $template = RevisionTemplate::factory()->create();
         $templateFields = RevisionTemplateField::factory()->count(6)->create([
-            'template_id' => $template->id
+            'template_id' => $template->id,
         ]);
 
         // Assert

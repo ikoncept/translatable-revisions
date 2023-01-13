@@ -23,8 +23,8 @@ class DefinitionsUpdated
     /**
      * Create a new event instance.
      *
-     * @param Collection $definitions
-     * @param mixed $model
+     * @param  Collection  $definitions
+     * @param  mixed  $model
      * @return void
      */
     public function __construct(Collection $definitions, $model)

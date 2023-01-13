@@ -2,8 +2,6 @@
 
 namespace Infab\TranslatableRevisions\Tests;
 
-use Infab\TranslatableRevisions\Tests\TestCase;
-
 class AssetPublishTest extends TestCase
 {
     /** @test **/

@@ -6,7 +6,7 @@ use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
-    public function setUp() : void
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -21,7 +21,6 @@ abstract class TestCase extends Orchestra
         $app['config']->set('translatable-revisions.revision_meta_table_name', 'revision_meta');
         $app['config']->set('translatable-revisions.revision_template_fields_table_name', 'revision_template_fields');
         $app['config']->set('translatable-revisions.delimiter', '-');
-
 
         // include_once(__DIR__  . '/../database/migrations/create_translatable_revisions_table.php.stub');
         // (new \CreateTranslatableRevisionsTable())->up();
@@ -52,7 +51,7 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            \Infab\TranslatableRevisions\TranslatableRevisionsServiceProvider::class
+            \Infab\TranslatableRevisions\TranslatableRevisionsServiceProvider::class,
         ];
     }
 }

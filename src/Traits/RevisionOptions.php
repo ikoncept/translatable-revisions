@@ -2,22 +2,23 @@
 
 namespace Infab\TranslatableRevisions\Traits;
 
-class RevisionOptions {
-
+class RevisionOptions
+{
     /**
      * Types that require special care,
      * for example files, images etc
-     * @var array $specialTypes
+     *
+     * @var array
      */
     public $specialTypes = [];
 
     /**
      * Getters, specify how the fields should
      * be represented or transformed
-     * @var array $getters
+     *
+     * @var array
      */
     public $getters = [];
-
 
     /**
      * Default template for a model which refers
@@ -28,7 +29,6 @@ class RevisionOptions {
      */
     public $defaultTemplate = '';
 
-
     /**
      * Arrayg of tags that should be
      * flushed on save and delete
@@ -37,10 +37,10 @@ class RevisionOptions {
      */
     public $cacheTagsToFlush = [];
 
-
     /**
      * Default included getters
-     * @var array $defaultGetters
+     *
+     * @var array
      */
     public $defaultGetters = ['repeater' => 'getRepeater'];
 
@@ -49,11 +49,10 @@ class RevisionOptions {
         return new static();
     }
 
-
     /**
      * Register affected types
      *
-     * @param array $types
+     * @param  array  $types
      * @return self
      */
     public function registerSpecialTypes(array $types): self
@@ -66,7 +65,7 @@ class RevisionOptions {
     /**
      * Register new getters
      *
-     * @param array $getters
+     * @param  array  $getters
      * @return self
      */
     public function registerGetters(array $getters): self
@@ -79,17 +78,17 @@ class RevisionOptions {
     /**
      * Register a default template
      *
-     * @param string $slug
+     * @param  string  $slug
      * @return self
      */
-    public function registerDefaultTemplate(string $slug) : self
+    public function registerDefaultTemplate(string $slug): self
     {
         $this->defaultTemplate = $slug;
 
         return $this;
     }
 
-    public function registerCacheTagsToFlush(array $tags) : self
+    public function registerCacheTagsToFlush(array $tags): self
     {
         $this->cacheTagsToFlush = $tags;
 

@@ -14,7 +14,7 @@ class TranslatedRevisionUpdated
     /**
      * Create a new event instance.
      *
-     * @param mixed $model
+     * @param  mixed  $model
      */
     public function __construct($model)
     {

@@ -1,4 +1,5 @@
 <?php
+
 namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -14,7 +15,7 @@ class RevisionMeta extends Model
     protected $fillable = ['meta_key', 'meta_value', 'model_id', 'model_type', 'model_version'];
 
     protected $casts = [
-        'meta_value' => 'array'
+        'meta_value' => 'array',
     ];
 
     public function __construct(array $attributes = [])
@@ -41,7 +42,7 @@ class RevisionMeta extends Model
         return $this->morphTo();
     }
 
-    public function scopeModelMeta(Builder $query, Model $model) : Builder
+    public function scopeModelMeta(Builder $query, Model $model): Builder
     {
         return $query->where('model_type', $model->morphClass ?? $model->getMorphClass())
             ->where('model_id', $model->id);
@@ -50,11 +51,11 @@ class RevisionMeta extends Model
     /**
      * Undocumented function
      *
-     * @param Builder $query
-     * @param mixed $revision
+     * @param  Builder  $query
+     * @param  mixed  $revision
      * @return Builder
      */
-    public function scopeMetaFields(Builder $query, $revision) : Builder
+    public function scopeMetaFields(Builder $query, $revision): Builder
     {
         return $query->leftJoin('revision_template_fields', 'revision_meta.meta_key', '=', 'revision_template_fields.key')
             ->select(
@@ -63,5 +64,4 @@ class RevisionMeta extends Model
             )
             ->where('model_version', $revision);
     }
-
 }

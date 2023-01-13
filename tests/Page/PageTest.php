@@ -4,11 +4,6 @@ namespace Infab\TranslatableRevisions\Tests\Page;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
-use Infab\TranslatableRevisions\Models\Page;
-use Infab\TranslatableRevisions\Models\RevisionMeta;
-use Infab\TranslatableRevisions\Models\RevisionTemplate;
-use Infab\TranslatableRevisions\Models\RevisionTemplateField;
-use Infab\TranslatableRevisions\Tests\TestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Infab\TranslatableRevisions\Events\DefinitionsPublished;
@@ -17,7 +12,11 @@ use Infab\TranslatableRevisions\Events\TranslatedRevisionDeleted;
 use Infab\TranslatableRevisions\Events\TranslatedRevisionUpdated;
 use Infab\TranslatableRevisions\Models\I18nDefinition;
 use Infab\TranslatableRevisions\Models\I18nTerm;
-use Prophecy\Prophecy\Revealer;
+use Infab\TranslatableRevisions\Models\Page;
+use Infab\TranslatableRevisions\Models\RevisionMeta;
+use Infab\TranslatableRevisions\Models\RevisionTemplate;
+use Infab\TranslatableRevisions\Models\RevisionTemplateField;
+use Infab\TranslatableRevisions\Tests\TestCase;
 
 class PageTest extends TestCase
 {
@@ -49,7 +48,7 @@ class PageTest extends TestCase
         // Arrange
         $template = RevisionTemplate::factory()->create();
         $page = Page::factory()->create([
-            'template_id' => $template->id
+            'template_id' => $template->id,
         ]);
 
         // Act
@@ -80,33 +79,33 @@ class PageTest extends TestCase
         $template = RevisionTemplate::factory()->create();
         $templateFields = RevisionTemplateField::factory()->count(5)->create([
             'template_id' => $template->id,
-            'translated' => true
+            'translated' => true,
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
             'revision' => 10,
             'created_at' => now()->subYear(),
-            'updated_at' => now()->subMonth()
+            'updated_at' => now()->subMonth(),
         ]);
 
         // Act
         $key = $templateFields->first()->toArray()['key'];
         $fields = $page->updateContent([
-            $key => 'En hel del saker'
+            $key => 'En hel del saker',
         ], 'sv');
 
         $updatedFields = $page->updateContent([
-            $key => 'En hel del andra saker'
+            $key => 'En hel del andra saker',
         ], 'sv');
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
             'content' => json_encode('En hel del andra saker'),
-            'locale' => 'sv'
+            'locale' => 'sv',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages'. $page->getDelimiter() . $page->id . $page->getDelimiter() . $page->revision . $page->getDelimiter() . $key,
-            'description' => $templateFields->first()->name . ' for ' . $page->title
+            'key' => 'pages'.$page->getDelimiter().$page->id.$page->getDelimiter().$page->revision.$page->getDelimiter().$key,
+            'description' => $templateFields->first()->name.' for '.$page->title,
         ]);
         Event::assertDispatched(TranslatedRevisionUpdated::class);
     }
@@ -120,18 +119,18 @@ class PageTest extends TestCase
             'template_id' => $template->id,
             'name' => 'Page title',
             'translated' => true,
-            'key' => 'page_title'
+            'key' => 'page_title',
         ]);
         $boxField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
             'translated' => true,
             'key' => 'boxes',
             'name' => 'Boxes',
-            'repeater' => true
+            'repeater' => true,
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
-            'revision' => 10
+            'revision' => 10,
         ]);
 
         // Act
@@ -142,26 +141,24 @@ class PageTest extends TestCase
                 ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
-            ]
+            ],
         ]);
 
         // Assert
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => json_encode('The page title for the page')
+            'content' => json_encode('The page title for the page'),
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
-            'content' => json_encode('The page title for the page')
+            'content' => json_encode('The page title for the page'),
         ]);
         $terms = DB::table('i18n_terms')->get();
 
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages'. $page->getDelimiter() . $page->id . $page->getDelimiter() . $page->revision . $page->getDelimiter() . 'page_title',
+            'key' => 'pages'.$page->getDelimiter().$page->id.$page->getDelimiter().$page->revision.$page->getDelimiter().'page_title',
         ]);
         $this->assertDatabaseHas('i18n_terms', [
-            'key' => 'pages' . $page->getDelimiter() . $page->id . $page->getDelimiter() . $page->revision . $page->getDelimiter() . 'boxes',
+            'key' => 'pages'.$page->getDelimiter().$page->id.$page->getDelimiter().$page->revision.$page->getDelimiter().'boxes',
         ]);
-
-
 
         $this->assertDatabaseHas('i18n_definitions', [
             'locale' => 'en',
@@ -188,43 +185,42 @@ class PageTest extends TestCase
         // Arrange
         Event::fake(DefinitionsPublished::class);
         $prefix = config('translatable-revisions.i18n_table_prefix_name');
-        DB::table($prefix . 'i18n_locales')->insert([
+        DB::table($prefix.'i18n_locales')->insert([
             'name' => 'Swedish',
             'native' => 'Svenska',
             'iso_code' => 'sv',
             'regional' => 'se_SV',
-            'enabled' => true
+            'enabled' => true,
         ]);
         $template = RevisionTemplate::factory()->create();
         $templateFields = RevisionTemplateField::factory()->count(5)->create([
             'template_id' => $template->id,
-            'translated' => true
+            'translated' => true,
         ]);
         $page = Page::factory()->create([
             'id' => 1,
             'title' => 'Original start page',
             'template_id' => $template->id,
             'revision' => 1,
-            'published_version' => null
+            'published_version' => null,
         ]);
         $key = $templateFields->first()->toArray()['key'];
 
         $fields = $page->updateContent([
-            $key => 'En hel del saker'
+            $key => 'En hel del saker',
         ], 1, 'sv', 1);
 
         $revisionFields = $page->updateContent([
-            $key => 'What, helt annat'
+            $key => 'What, helt annat',
         ], 'sv', 2);
 
         $enFields = $page->updateContent([
-            $key => 'A bunch of things'
+            $key => 'A bunch of things',
         ], 'en', 1);
 
         $enRevisionFields = $page->updateContent([
-            $key => 'What, something completeley different!'
+            $key => 'What, something completeley different!',
         ], 'en', 2);
-
 
         // Act
         $page->publish(2);
@@ -233,25 +229,25 @@ class PageTest extends TestCase
         $this->assertDatabaseHas('pages', [
             'id' => 1,
             'published_version' => 2,
-            'revision' => 3
+            'revision' => 3,
         ]);
 
         $this->assertDatabaseMissing('i18n_definitions', [
             'content' => 'En hel del saker',
-            'locale' => 'sv'
+            'locale' => 'sv',
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
             'content' => json_encode('What, helt annat'),
-            'locale' => 'sv'
+            'locale' => 'sv',
         ]);
 
         $this->assertDatabaseMissing('i18n_definitions', [
             'content' => json_encode('A bunch of things'),
-            'locale' => 'en'
+            'locale' => 'en',
         ]);
         $this->assertDatabaseHas('i18n_definitions', [
             'content' => json_encode('What, something completeley different!'),
-            'locale' => 'en'
+            'locale' => 'en',
         ]);
 
         Event::assertDispatched(DefinitionsPublished::class);
@@ -267,7 +263,7 @@ class PageTest extends TestCase
             'template_id' => $template->id,
             'name' => 'Page title',
             'translated' => true,
-            'key' => 'page_title'
+            'key' => 'page_title',
         ]);
         $boxField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
@@ -275,11 +271,11 @@ class PageTest extends TestCase
             'key' => 'boxes',
             'name' => 'Boxes',
             'repeater' => true,
-            'type' => 'repeater'
+            'type' => 'repeater',
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
-            'revision' => 0
+            'revision' => 0,
         ]);
 
         // Act
@@ -294,13 +290,13 @@ class PageTest extends TestCase
                     'children' => [
                         [
                             'title' => 'Sweet child',
-                            'pop_image' => [2]
-                        ]
-                    ]
+                            'pop_image' => [2],
+                        ],
+                    ],
                 ],
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
-            ]
+            ],
         ]);
         // dd(I18nDefinition::all()->toArray(), I18nTerm::all()->toArray());
 
@@ -322,16 +318,16 @@ class PageTest extends TestCase
             'type' => 'image',
             'name' => 'image',
             'translated' => false,
-            'key' => 'image'
+            'key' => 'image',
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
-            'revision' => 10
+            'revision' => 10,
         ]);
 
         // Act
         $fields = $page->updateContent([
-            'image' => [71, 80, 90]
+            'image' => [71, 80, 90],
         ]);
 
         // Assert
@@ -352,7 +348,7 @@ class PageTest extends TestCase
             'template_id' => $template->id,
             'name' => 'Page title',
             'translated' => true,
-            'key' => 'page_title'
+            'key' => 'page_title',
         ]);
         $boxField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
@@ -360,18 +356,18 @@ class PageTest extends TestCase
             'key' => 'boxes',
             'name' => 'Boxes',
             'repeater' => true,
-            'type' => 'repeater'
+            'type' => 'repeater',
         ]);
         $imageField = RevisionTemplateField::factory()->create([
             'template_id' => $template->id,
             'type' => 'image',
             'name' => 'image',
             'translated' => false,
-            'key' => 'what_image'
+            'key' => 'what_image',
         ]);
         $page = Page::factory()->create([
             'template_id' => $template->id,
-            'revision' => 10
+            'revision' => 10,
         ]);
         $fields = $page->updateContent([
             'page_title' => 'The page title for the page',
@@ -380,7 +376,7 @@ class PageTest extends TestCase
                 ['title' => 'Box 1 title!', 'url' => 'https://google.com'],
                 ['title' => 'Box 2 title!', 'url' => 'https://bog.com'],
                 ['title' => 'Box 3 title!', 'url' => 'http://flank.se'],
-            ]
+            ],
         ]);
 
         // Act
@@ -388,18 +384,18 @@ class PageTest extends TestCase
 
         // Assert
         $this->assertDatabaseMissing('pages', [
-            'id' => $page->id
+            'id' => $page->id,
         ]);
 
         $this->assertDatabaseMissing('i18n_terms', [
-            'key' => 'pages' . $page->getDelimiter() . $page->id . $page->getDelimiter() . '10-page_title'
+            'key' => 'pages'.$page->getDelimiter().$page->id.$page->getDelimiter().'10-page_title',
         ]);
         $this->assertDatabaseMissing('i18n_definitions', [
-            'content' => 'The page title for the page'
+            'content' => 'The page title for the page',
         ]);
         $this->assertDatabaseMissing('revision_meta', [
             'model_id' => $page->id,
-            'model_type' => 'Infab\TranslatableRevisions\Models\Page'
+            'model_type' => 'Infab\TranslatableRevisions\Models\Page',
         ]);
         Event::assertDispatched(TranslatedRevisionDeleted::class);
     }
@@ -409,7 +405,7 @@ class PageTest extends TestCase
     {
         // Arrange
         $page = Page::factory()->create([
-            'revision' => 10
+            'revision' => 10,
         ]);
         $tagsToFlush = $page->getRevisionOptions()->cacheTagsToFlush;
 

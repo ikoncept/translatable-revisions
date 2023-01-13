@@ -3,10 +3,7 @@
 namespace Infab\TranslatableRevisions\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Infab\TranslatableRevisions\Models\Page;
 use Infab\TranslatableRevisions\Models\RevisionTemplateField;
-use Illuminate\Support\Str;
-use Infab\TranslatableRevisions\Models\RevisionTemplate;
 
 class RevisionTemplateFieldFactory extends Factory
 {

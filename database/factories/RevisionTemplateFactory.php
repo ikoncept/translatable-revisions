@@ -3,8 +3,8 @@
 namespace Infab\TranslatableRevisions\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Infab\TranslatableRevisions\Models\RevisionTemplate;
 use Illuminate\Support\Str;
+use Infab\TranslatableRevisions\Models\RevisionTemplate;
 
 class RevisionTemplateFactory extends Factory
 {
@@ -24,7 +24,7 @@ class RevisionTemplateFactory extends Factory
     {
         return [
             'name' => $this->faker->name,
-            'slug' => Str::slug($this->faker->name)
+            'slug' => Str::slug($this->faker->name),
         ];
     }
 }

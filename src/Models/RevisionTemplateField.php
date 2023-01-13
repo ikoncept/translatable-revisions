@@ -1,4 +1,5 @@
 <?php
+
 namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -6,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Infab\TranslatableRevisions\Database\Factories\RevisionTemplateFieldFactory;
 
-class RevisionTemplateField extends Model {
-
+class RevisionTemplateField extends Model
+{
     use HasFactory;
 
     public $timestamps = false;
@@ -33,7 +34,7 @@ class RevisionTemplateField extends Model {
         return RevisionTemplateFieldFactory::new();
     }
 
-    public function template() : BelongsTo
+    public function template(): BelongsTo
     {
         return $this->belongsTo(RevisionTemplate::class);
     }

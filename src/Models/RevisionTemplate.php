@@ -1,11 +1,11 @@
 <?php
+
 namespace Infab\TranslatableRevisions\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Infab\TranslatableRevisions\Database\Factories\RevisionTemplateFactory;
-use Infab\TranslatableRevisions\Models\RevisionTemplateField;
 
 class RevisionTemplate extends Model
 {
@@ -30,7 +30,7 @@ class RevisionTemplate extends Model
         return RevisionTemplateFactory::new();
     }
 
-    public function fields() : HasMany
+    public function fields(): HasMany
     {
         return $this->hasMany(RevisionTemplateField::class, 'template_id')
             ->orderBy('sort_index');
