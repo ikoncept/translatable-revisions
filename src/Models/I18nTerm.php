@@ -40,7 +40,7 @@ class I18nTerm extends Model
     {
         return (get_class($this->getConnection()) === 'Illuminate\Database\SQLiteConnection')
             ? DB::raw("'%' || revision_template_fields.key || '%'")
-            : DB::raw("concat('%-%--',revision_template_fields.key)");
+            : DB::raw("concat('%-%-',revision_template_fields.key)");
     }
 
     public function scopeTranslatedFields(Builder $query, string $termWithoutKey, string $locale): Builder
