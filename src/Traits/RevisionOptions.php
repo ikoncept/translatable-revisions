@@ -44,6 +44,20 @@ class RevisionOptions
      */
     public $defaultGetters = ['repeater' => 'getRepeater'];
 
+    /**
+     * If the model should be indexable
+     *
+     * @var bool
+     */
+    public $isIndexable = false;
+
+    /**
+     * Indexable keys
+     *
+     * @var array
+     */
+    public $indexableKeys = [];
+
     public static function create(): self
     {
         return new static();
@@ -51,9 +65,6 @@ class RevisionOptions
 
     /**
      * Register affected types
-     *
-     * @param  array  $types
-     * @return self
      */
     public function registerSpecialTypes(array $types): self
     {
@@ -64,9 +75,6 @@ class RevisionOptions
 
     /**
      * Register new getters
-     *
-     * @param  array  $getters
-     * @return self
      */
     public function registerGetters(array $getters): self
     {
@@ -77,9 +85,6 @@ class RevisionOptions
 
     /**
      * Register a default template
-     *
-     * @param  string  $slug
-     * @return self
      */
     public function registerDefaultTemplate(string $slug): self
     {
@@ -91,6 +96,14 @@ class RevisionOptions
     public function registerCacheTagsToFlush(array $tags): self
     {
         $this->cacheTagsToFlush = $tags;
+
+        return $this;
+    }
+
+    public function setSearchable(bool $searchable, array $indexableKeys = []): self
+    {
+        $this->isIndexable = $searchable;
+        $this->indexableKeys = $indexableKeys;
 
         return $this;
     }
