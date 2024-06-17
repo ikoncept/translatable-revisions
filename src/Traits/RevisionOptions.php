@@ -100,7 +100,7 @@ class RevisionOptions
         return $this;
     }
 
-    public function setSearchable(bool $searchable, array $indexableKeys = []): self
+    public function setIndexable(bool $searchable, array $indexableKeys = []): self
     {
         $this->isIndexable = $searchable;
         $this->indexableKeys = $indexableKeys;
