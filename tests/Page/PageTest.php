@@ -415,4 +415,22 @@ class PageTest extends TestCase
         $this->assertIsArray($tagsToFlush);
         $this->assertEquals('cms_pages', $tagsToFlush[0]);
     }
+
+     /** @test **/
+     public function it_can_get_indexable_keys_from_options()
+     {
+         // Arrange
+         $page = Page::factory()->create([
+             'revision' => 10,
+         ]);
+         $indexableKeys = $page->getRevisionOptions()->indexableKeys;
+
+         // Act
+
+         // Assert
+         $this->assertIsArray($indexableKeys);
+         $this->assertEquals('page_title', $indexableKeys[0]);
+         $this->assertEquals(true, $page->getRevisionOptions()->isIndexable);
+         $this->assertEquals('page_title', $page->getRevisionOptions()->titleKey);
+     }
 }

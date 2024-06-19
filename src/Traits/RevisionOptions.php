@@ -58,6 +58,13 @@ class RevisionOptions
      */
     public $indexableKeys = [];
 
+    /**
+     * Key to save as title
+     *
+     * @var string
+     */
+    public $titleKey = '';
+
     public static function create(): self
     {
         return new static();
@@ -100,10 +107,19 @@ class RevisionOptions
         return $this;
     }
 
-    public function setIndexable(bool $searchable, array $indexableKeys = []): self
+    /**
+     * Undocumented function
+     *
+     * @param  bool  $searchable
+     * @param  array  $indexableKeys
+     * @param  string  $titleKey
+     * @return self
+     */
+    public function setIndexable(bool $searchable, array $indexableKeys = [], string $titleKey = ''): self
     {
         $this->isIndexable = $searchable;
         $this->indexableKeys = $indexableKeys;
+        $this->titleKey = $titleKey;
 
         return $this;
     }
