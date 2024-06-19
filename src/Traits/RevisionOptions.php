@@ -110,14 +110,14 @@ class RevisionOptions
     /**
      * Undocumented function
      *
-     * @param  bool  $searchable
+     * @param  bool  $indexable
      * @param  array  $indexableKeys
      * @param  string  $titleKey
      * @return self
      */
-    public function setIndexable(bool $searchable, array $indexableKeys = [], string $titleKey = ''): self
+    public function setIndexable(bool $indexable, array $indexableKeys = [], string $titleKey = ''): self
     {
-        $this->isIndexable = $searchable;
+        $this->isIndexable = $indexable;
         $this->indexableKeys = $indexableKeys;
         $this->titleKey = $titleKey;
 
