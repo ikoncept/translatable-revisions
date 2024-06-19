@@ -65,6 +65,13 @@ class RevisionOptions
      */
     public $titleKey = '';
 
+    /**
+     * Callable method for indexing
+     *
+     * @var null|callable
+     */
+    public $indexFunction = null;
+
     public static function create(): self
     {
         return new static();
@@ -108,18 +115,19 @@ class RevisionOptions
     }
 
     /**
-     * Undocumented function
+     * Set indexable options
      *
      * @param  bool  $indexable
      * @param  array  $indexableKeys
      * @param  string  $titleKey
      * @return self
      */
-    public function setIndexable(bool $indexable, array $indexableKeys = [], string $titleKey = ''): self
+    public function setIndexable(bool $indexable, array $indexableKeys = [], string $titleKey = '', ?callable $callable = null): self
     {
         $this->isIndexable = $indexable;
         $this->indexableKeys = $indexableKeys;
         $this->titleKey = $titleKey;
+        $this->indexFunction = $callable;
 
         return $this;
     }
