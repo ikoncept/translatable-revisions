@@ -25,7 +25,7 @@ class Page extends Model
                 'image' => 'getImages',
                 'repeater' => 'getRepeater',
             ])
-            ->registerCacheTagsToFlush(['cms_pages'])
+            ->registerCacheKeysToFlush(['cms_pages'])
             ->setIndexable(true, ['page_title'], 'page_title');
     }
 

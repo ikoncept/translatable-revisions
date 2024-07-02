@@ -407,7 +407,7 @@ class PageTest extends TestCase
         $page = Page::factory()->create([
             'revision' => 10,
         ]);
-        $tagsToFlush = $page->getRevisionOptions()->cacheTagsToFlush;
+        $tagsToFlush = $page->getRevisionOptions()->cacheKeysToFlush;
 
         // Act
 

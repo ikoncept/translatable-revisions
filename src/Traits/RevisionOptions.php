@@ -35,7 +35,7 @@ class RevisionOptions
      *
      * @var array
      */
-    public $cacheTagsToFlush = [];
+    public $cacheKeysToFlush = [];
 
     /**
      * Default included getters
@@ -107,9 +107,22 @@ class RevisionOptions
         return $this;
     }
 
+    public function registerCacheKeysToFlush(array $tags): self
+    {
+        $this->cacheKeysToFlush = $tags;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     *
+     * @param  array  $tags
+     * @return self
+     */
     public function registerCacheTagsToFlush(array $tags): self
     {
-        $this->cacheTagsToFlush = $tags;
+        $this->cacheKeysToFlush = $tags;
 
         return $this;
     }
