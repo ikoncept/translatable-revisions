@@ -58,7 +58,6 @@ trait HasTranslatedRevisions
      * Set the locale, with fallback
      *
      * @param  string  $locale
-     * @return string
      */
     public function setLocale($locale): string
     {
@@ -80,7 +79,6 @@ trait HasTranslatedRevisions
      * Sets the revision, with default fallback
      *
      * @param  int|null  $revision
-     * @return int
      */
     public function setRevision($revision): int
     {
@@ -105,7 +103,7 @@ trait HasTranslatedRevisions
                 });
 
             // Clear terms/defs
-            (new I18nTerm())->clearTermsWithKey($termKey);
+            (new I18nTerm)->clearTermsWithKey($termKey);
             app()->events->dispatch(new TranslatedRevisionDeleted($model));
         });
 
@@ -116,8 +114,6 @@ trait HasTranslatedRevisions
 
     /**
      * Relation for revisiontemplates
-     *
-     * @return BelongsTo
      */
     public function template(): BelongsTo
     {
@@ -126,8 +122,6 @@ trait HasTranslatedRevisions
 
     /**
      * Relation for meta
-     *
-     * @return MorphMany
      */
     public function meta(): MorphMany
     {
@@ -136,8 +130,6 @@ trait HasTranslatedRevisions
 
     /**
      * Relation for terms
-     *
-     * @return MorphMany
      */
     public function terms(): MorphMany
     {
@@ -147,7 +139,6 @@ trait HasTranslatedRevisions
     /**
      * Gets the tempplate field via fieldKey
      *
-     * @param  string  $fieldKey
      * @return \Infab\TranslatableRevisions\Models\RevisionTemplateField
      *
      * @throws FieldKeyNotFound
@@ -173,10 +164,8 @@ trait HasTranslatedRevisions
     /**
      * Update content for fields
      *
-     * @param  array  $fieldData
      * @param  string|null  $locale
      * @param  int|null  $revision
-     * @return Collection
      */
     public function updateContent(array $fieldData, $locale = null, $revision = null): Collection
     {
@@ -225,12 +214,7 @@ trait HasTranslatedRevisions
     /**
      * Update or creates terms and definitions
      *
-     * @param  string  $identifier
-     * @param  RevisionTemplateField  $templateField
-     * @param  string  $locale
      * @param  mixed  $data
-     * @param  bool  $transformData
-     * @return array
      */
     public function updateOrCreateTermAndDefinition(string $identifier, RevisionTemplateField $templateField, string $locale, $data, bool $transformData = true): array
     {
@@ -262,6 +246,8 @@ trait HasTranslatedRevisions
         if (empty($data)) {
             return null;
         }
+
+        return $data;
 
         if (is_array($data) && Arr::isAssoc($data)) {
             if (isset($data['id'])) {
@@ -295,7 +281,6 @@ trait HasTranslatedRevisions
      * Transform images and children
      *
      * @param  mixed  $data
-     * @param  RevisionTemplateField  $templateField
      * @return mixed
      */
     protected function transformData($data, RevisionTemplateField $templateField)
@@ -358,7 +343,6 @@ trait HasTranslatedRevisions
      * Get the compound term key
      *
      * @param  int|null  $revision
-     * @return string
      */
     protected function getTermWithoutKey($revision = null): string
     {
@@ -369,7 +353,47 @@ trait HasTranslatedRevisions
             $rev = $this->revisionNumber;
         }
 
-        return  $this->getTable().$delimter.$this->id.$delimter.$rev.$delimter;
+        return $this->getTable().$delimter.$this->id.$delimter.$rev.$delimter;
+    }
+
+    /**
+     * Get the content for the field without using getters
+     *
+     * @param  int|null  $revision
+     * @param  string|null  $locale
+     */
+    public function getSimpleFieldContent($revision = null, $locale = null): Collection
+    {
+        $this->setLocale($locale);
+        $this->setRevision($revision);
+
+        // Escape wild card chars
+        $termWithoutKey = $this->getTermWithoutKey();
+
+        $translatedFields = I18nTerm::translatedFields(
+            $termWithoutKey,
+            $this->locale
+        )->get();
+
+        $metaFields = RevisionMeta::modelMeta($this)
+            ->metaFields($revision)
+            ->get();
+
+        $metaData = $metaFields->mapWithKeys(function ($metaItem) {
+            return [$metaItem->meta_key => $this->getMeta($metaItem)];
+        });
+
+        $grouped = collect($translatedFields)->mapWithKeys(function ($item, $key) {
+            if ($item->repeater) {
+                $content = json_decode($item->content, true);
+
+                return [$item->template_key => $content];
+            }
+
+            return [$item->template_key => json_decode($item->content)];
+        });
+
+        return $grouped->merge($metaData);
     }
 
     /**
@@ -377,7 +401,6 @@ trait HasTranslatedRevisions
      *
      * @param  int|null  $revision
      * @param  string|null  $locale
-     * @return Collection
      */
     public function getFieldContent($revision = null, $locale = null): Collection
     {
@@ -409,6 +432,7 @@ trait HasTranslatedRevisions
 
             if (in_array($item->type, $this->getRevisionOptions()->specialTypes)) {
                 if (array_key_exists($item->type, $this->getRevisionOptions()->getters)) {
+
                     return [
                         $item->template_key => $this->handleCallable(
                             [$this,  $this->getRevisionOptions()->getters[$item->type]],
@@ -451,7 +475,6 @@ trait HasTranslatedRevisions
     /**
      * Translate by term key
      *
-     * @param  string  $termKey
      * @return mixed
      */
     public function translateByKey(string $termKey, string $locale)
@@ -497,7 +520,6 @@ trait HasTranslatedRevisions
      *
      * @param  string|int  $fieldKey
      * @param  mixed  $data
-     * @return RevisionMeta
      */
     public function updateMetaItem($fieldKey, $data): RevisionMeta
     {
@@ -516,9 +538,6 @@ trait HasTranslatedRevisions
 
     /**
      * Update a meta items with an array of data
-     *
-     * @param  array  $data
-     * @return array
      */
     public function updateMetaContent(array $data): array
     {
@@ -552,7 +571,6 @@ trait HasTranslatedRevisions
      * Get repeater
      *
      * @param  mixed  $repeater
-     * @return array
      */
     public function getRepeater($repeater): array
     {
@@ -580,7 +598,6 @@ trait HasTranslatedRevisions
      * Handle child repeater
      *
      * @param  array|null  $translatedItem
-     * @return Collection
      */
     public function handleChildRepeater($translatedItem): Collection
     {
@@ -607,25 +624,26 @@ trait HasTranslatedRevisions
     /**
      * Publish a specified revision
      *
-     * @param  int  $revision
      * @return mixed
      */
-    public function publish(int $revision)
+    public function publish(int $suppliedRevision)
     {
-        $this->isPublishing = true;
         $updatedContent = I18nLocale::where('enabled', 1)
-            ->get()->mapWithKeys(function ($locale) use ($revision) {
-                $content = $this->getFieldContent($revision, $locale->iso_code);
-                $oldRevision = $revision - 1;
-                $this->published_version = $revision;
-                $this->revision = $revision + 1;
+            ->get()->mapWithKeys(function ($locale) use ($suppliedRevision) {
+                $unpublishedContent = $this->getFieldContent($suppliedRevision, $locale->iso_code);
+
+                // Move revisions
+                $this->published_version = $suppliedRevision;
+                $this->revision = $suppliedRevision + 1;
                 $this->published_at = now();
-                $this->updateContent($content->toArray(), $locale->iso_code, $this->revision);
+
+                // Set content for new revision
+                $this->updateContent($unpublishedContent->toArray(), $locale->iso_code, $this->revision);
                 $this->save();
 
-                $this->purgeOldRevisions($oldRevision);
+                $this->purgeOldRevisions($suppliedRevision - 1);
 
-                return [$locale->iso_code => $this->getFieldContent($revision, $locale->iso_code)];
+                return [$locale->iso_code => $this->getFieldContent($suppliedRevision, $locale->iso_code)];
             });
 
         app()->events->dispatch(new DefinitionsPublished($updatedContent, $this));
@@ -636,10 +654,8 @@ trait HasTranslatedRevisions
     /**
      * Handles sequentials arrays, used for repeaters
      *
-     * @param  array  $data
      * @param  string  $fieldKey
      * @param  RevisionTemplateField  $templateField
-     * @return Collection
      */
     protected function handleSequentialArray(array $data, $fieldKey, $templateField): Collection
     {
