@@ -432,7 +432,6 @@ trait HasTranslatedRevisions
 
             if (in_array($item->type, $this->getRevisionOptions()->specialTypes)) {
                 if (array_key_exists($item->type, $this->getRevisionOptions()->getters)) {
-
                     return [
                         $item->template_key => $this->handleCallable(
                             [$this,  $this->getRevisionOptions()->getters[$item->type]],
@@ -640,6 +639,11 @@ trait HasTranslatedRevisions
                 // Set content for new revision
                 $this->updateContent($unpublishedContent->toArray(), $locale->iso_code, $this->revision);
                 $this->save();
+
+                // Prevent purge when going from revision 0 to 1
+                if ($suppliedRevision > 1) {
+                    $this->purgeOldRevisions($suppliedRevision - 1);
+                }
 
                 $this->purgeOldRevisions($suppliedRevision - 1);
 
