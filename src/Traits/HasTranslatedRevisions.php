@@ -248,33 +248,6 @@ trait HasTranslatedRevisions
         }
 
         return $data;
-
-        if (is_array($data) && Arr::isAssoc($data)) {
-            if (isset($data['id'])) {
-                return [$data['id']];
-            } else {
-                return $data;
-            }
-        }
-
-        if (is_array($data) && ! Arr::isAssoc($data)) {
-            if (is_numeric($data[0])) {
-                return $data;
-            }
-            if (is_array($data[0])) {
-                if (! array_key_exists('id', $data[0])) {
-                    return $data;
-                }
-            }
-
-            if (! array_key_exists('id', $data)) {
-                return collect($data)->toArray();
-            }
-
-            return collect($data)->pluck('id')->toArray();
-        }
-
-        return $data;
     }
 
     /**
